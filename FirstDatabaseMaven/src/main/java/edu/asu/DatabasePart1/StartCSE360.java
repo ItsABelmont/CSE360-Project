@@ -24,13 +24,10 @@ public class StartCSE360 {
 				setupAdmin();		//enhancement
 			}
 			else {
-				//asks what the user would like to do cannot get specific according to the assignment
 				System.out.print("What would you like to do 1.Register 2.Login  ");
 				String choice = scanner.nextLine();
 
-				
 				switch (choice) {
-				//if registering what they would like to register as
 				case "1":
 					System.out.println("What would you like to register as?\n1. Admin\n2. Instructor\n3. Student");
 					String choose = scanner.nextLine();
@@ -76,8 +73,7 @@ public class StartCSE360 {
 		}
 	}
 
-	//asks for email and password for the admin and asks for password twice
-	private static void setupAdmin() throws SQLException {		
+	private static void setupAdmin() throws SQLException {		//enhancement
 		System.out.println("Setting up the Admin access.");
 		System.out.print("Enter Admin Email: ");
 		String email = scanner.nextLine();
@@ -105,9 +101,7 @@ public class StartCSE360 {
 
 	}
 
-	//asks for email and password for the instructor and asks for password twice
-
-	private static void instructorFlow() throws SQLException {		
+	private static void instructorFlow() throws SQLException {		//enhancement
 		String email = null;
 		String password = null;
 
@@ -139,8 +133,8 @@ public class StartCSE360 {
 	
 	}
 	
-	//asks for email and password for the student and asks for password twice
-	private static void studentFlow() throws SQLException {
+
+	private static void studentFlow() throws SQLException {		// enhancement 
 		String email = null;
 		String password = null;
 
@@ -171,7 +165,6 @@ public class StartCSE360 {
 	    }
 	}
 
-	//admin login part their capabilities must add remove or add a user role to is
 	private static void adminFlow() throws SQLException {
         databaseHelper.displayUsersByAdmin();
 
@@ -184,16 +177,19 @@ public class StartCSE360 {
 		else {
 			System.out.println("Hello " + databaseHelper.getFirstName() + " What would you like to do?");
 		}
-
-		//bad at case things so I made a loop
+		
 		while(true) {
-		System.out.println("1. Print Users\n2. Delete User\n3. Log Out");
+		System.out.println("1. Print Users\n2. Delete User\n3. Add user role\n4. Remove user role\n5. logout");
 		String choice = scanner.nextLine();
 			if(choice.equals("1"))
 				databaseHelper.displayUsersByAdmin();
 			else if(choice.equals("2"))
 				databaseHelper.deleteUser();
 			else if(choice.equals("3"))
+				databaseHelper.addUserRole();
+			else if(choice.equals("4"))
+				databaseHelper.removeUserRole();
+			else if(choice.equals("5"))
 				return;
 			else
 				System.out.println("Not valid choose a number");
