@@ -13,6 +13,8 @@ public class StartCSE360 {
 
 		try { 
 			
+			///Here
+			
 			databaseHelper.connectToDatabase();  // Connect to the database
 
 			// Check if the database is empty (no users registered)
