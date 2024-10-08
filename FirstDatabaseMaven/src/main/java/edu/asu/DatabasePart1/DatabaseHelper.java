@@ -33,6 +33,7 @@ class DatabaseHelper {
 		}
 	}
 
+	//expanded table too include the new variables
 	private void createTables() throws SQLException {
 		String userTable = "CREATE TABLE IF NOT EXISTS cse360users ("
 				+ "id INT AUTO_INCREMENT PRIMARY KEY, "
@@ -56,7 +57,9 @@ class DatabaseHelper {
 		}
 		return true;
 	}
-	
+
+	//inserts placeholder values for certain variables such as the names
+	//as we only ask them to finish registering when they try to login again
 	public void register(String email, String password, String role) throws SQLException {
 		String insertUser = "INSERT INTO cse360users (email, password, firstName, middleName, lastName, preferredName, role) VALUES (?, ?, ?, ?, ?, ?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
@@ -75,13 +78,14 @@ class DatabaseHelper {
 	public boolean login(String email, String password) throws SQLException {
 		String query = "SELECT * FROM cse360users WHERE email = ? AND password = ? AND role = ?";
 		Scanner scanner = new Scanner(System.in);
+		//This is to detect if they need to finish registering and if they have multiple roles
 		String sql = "SELECT * FROM cse360users"; 
 		Statement stmt = connection.createStatement();
 		ResultSet rs = stmt.executeQuery(sql); 
 		String save = "";
 		
 		int count = 0;
-		
+		//goes throught the table values looking for roles and placegholder values
 		while(rs.next()) { 
 			if(rs.getString("email").equals(email) && rs.getString("firstName").equals("placeholder")) {
 				System.out.println("Finish Setting up your account");
@@ -102,13 +106,14 @@ class DatabaseHelper {
 			}
 		} 
 		
-		
+		//checks to see if their is more than one role and if so what role they would like
 		if(count > 1) {
 			System.out.println(save);
 			System.out.println("Looks like you have more than one role!\nWhich one would you like to login as?");
 			save = scanner.nextLine();
 		}
 
+		//executes query and stuff
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
 			pstmt.setString(1, email);
 			pstmt.setString(2, password);
@@ -121,6 +126,7 @@ class DatabaseHelper {
 		
 	}
 	
+	//getters for new values that I made fir cse360 start file
 	public String getFirstName() {
 		return this.firstName;
 	}
@@ -135,17 +141,19 @@ class DatabaseHelper {
 	
 	public void finishRegistration(String email) throws SQLException{
 		Scanner scanner = new Scanner(System.in);
-		
+
+		//Asks to insert name values
 		System.out.println("Insert first name: ");
 		String first = scanner.nextLine();
 		System.out.println("Insert middle: ");
 		String middle = scanner.nextLine();
-		
 		System.out.println("Insert last: ");
 		String last = scanner.nextLine();
-		
+
+		//asks whether or not they have a preffered to know whether to display it or not
 		System.out.println("Do you have a preferred name? Y/N");
 		String yn = scanner.nextLine();
+		//determines what their preffered name is
 		if(yn.equals("Y")) {
 			System.out.println("Insert prefered: ");
 			
@@ -162,6 +170,7 @@ class DatabaseHelper {
 			}
 		}
 		//to get middle and last just keeping repeating this code over and over
+		//not a good way to do it but it would not work otherwise for mer
 		String sql = "UPDATE cse360users SET firstName = ? WHERE email = ?";
 		this.firstName = first;
 
@@ -194,7 +203,8 @@ class DatabaseHelper {
 		
 		
 	}
-	
+
+	//added role as a user may exist with multiple roles
 	public boolean doesUserExist(String email, String role) {
 	    String query = "SELECT COUNT(*) FROM cse360users WHERE email = ? AND role = ?";
 	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -212,7 +222,8 @@ class DatabaseHelper {
 	    }
 	    return false; // If an error occurs, assume user doesn't exist
 	}
-	
+
+	//deletes the user based off of email getting rid of all their roles and variations
 	public void deleteUser() throws SQLException{
 		String sql = "DELETE FROM cse360users WHERE email=?";
 		Scanner scanner = new Scanner(System.in);
@@ -221,7 +232,7 @@ class DatabaseHelper {
 		System.out.println("Choose a user to delete");
 		String email = scanner.nextLine();
 		statement.setString(1, email);
-		
+		//confirms with the admin the deletion
 		System.out.println("Are you sure that you want to do this?");
 		String answer = scanner.nextLine();
 		if(answer.equals("Yes")) {
@@ -229,7 +240,8 @@ class DatabaseHelper {
 		}
 		
 	}
-	
+
+	//Displays users elongated it to include names and stuff
 	public void displayUsersByAdmin() throws SQLException{
 		String sql = "SELECT * FROM cse360users"; 
 		Statement stmt = connection.createStatement();
@@ -258,7 +270,8 @@ class DatabaseHelper {
 
 		} 
 	}
-	
+
+	//made by reem
 	public void displayUsersByInstructor() throws SQLException{		//enhancement
 		String sql = "SELECT * FROM cse360users"; 
 		Statement stmt = connection.createStatement();
@@ -278,7 +291,8 @@ class DatabaseHelper {
 			System.out.println(", Last: " + role); 
 		} 
 	}
-	
+
+	//made by reem
 	public void displayUsersByStudent() throws SQLException{		// enhancement
 		String sql = "SELECT * FROM cse360users"; 
 		Statement stmt = connection.createStatement();
@@ -298,7 +312,8 @@ class DatabaseHelper {
 			System.out.println(", Last: " + role); 
 		} 
 	}
-	
+
+	//connection stuff
 	public Connection getConnection() {
 	    return connection;
 	}
