@@ -6,7 +6,6 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-
 class DatabaseHelper {
 
 	// JDBC driver name and database URL 
@@ -34,14 +33,15 @@ class DatabaseHelper {
 	}
 
 	private void createTables() throws SQLException {
-		System.out.println("Hello");
 		String userTable = "CREATE TABLE IF NOT EXISTS cse360users ("
 				+ "id INT AUTO_INCREMENT PRIMARY KEY, "
 				+ "email VARCHAR(255) UNIQUE, "
 				+ "password VARCHAR(255), "
-				+ "role VARCHAR(20), "
-				+ "first VARCHAR(255))";
-		System.out.println("Hello");
+				+ "firstName VARCHAR(255), "
+				+ "middleName VARCHAR(255), "
+				+ "lastName VARCHAR(255), "
+				+ "preferredName VARCHAR(255), "
+				+ "role VARCHAR(20))";
 		statement.execute(userTable);
 	}
 
@@ -56,13 +56,16 @@ class DatabaseHelper {
 		return true;
 	}
 
-	public void register(String email, String password, String role) throws SQLException {
-		String insertUser = "INSERT INTO cse360users (email, password, role, first) VALUES (?, ?, ?, ?)";
+	public void register(String email, String password, String firstName, String middleName, String lastName, String preferredName, String role) throws SQLException {
+		String insertUser = "INSERT INTO cse360users (email, password, firstName, middleName, lastName, preferredName, role) VALUES (?, ?, ?, ?, ?, ?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
 			pstmt.setString(1, email);
 			pstmt.setString(2, password);
-			pstmt.setString(3, role);
-			pstmt.setString(4,"Man");
+			pstmt.setString(3, firstName);
+			pstmt.setString(4, middleName);
+			pstmt.setString(5, lastName);
+			pstmt.setString(6, preferredName);
+			pstmt.setString(7, role);
 			pstmt.executeUpdate();
 		}
 	}
@@ -116,7 +119,7 @@ class DatabaseHelper {
 		} 
 	}
 	
-	public void displayUsersByUser() throws SQLException{
+	public void displayUsersByInstructor() throws SQLException{		//enhancement
 		String sql = "SELECT * FROM cse360users"; 
 		Statement stmt = connection.createStatement();
 		ResultSet rs = stmt.executeQuery(sql); 
@@ -135,8 +138,31 @@ class DatabaseHelper {
 			System.out.println(", Last: " + role); 
 		} 
 	}
+	
+	public void displayUsersByStudent() throws SQLException{		// enhancement
+		String sql = "SELECT * FROM cse360users"; 
+		Statement stmt = connection.createStatement();
+		ResultSet rs = stmt.executeQuery(sql); 
 
+		while(rs.next()) { 
+			// Retrieve by column name 
+			int id  = rs.getInt("id"); 
+			String  email = rs.getString("email"); 
+			String password = rs.getString("password"); 
+			String role = rs.getString("role");  
 
+			// Display values 
+			System.out.print("ID: " + id); 
+			System.out.print(", Age: " + email); 
+			System.out.print(", First: " + password); 
+			System.out.println(", Last: " + role); 
+		} 
+	}
+	
+	public Connection getConnection() {
+	    return connection;
+	}
+	
 	public void closeConnection() {
 		try{ 
 			if(statement!=null) statement.close(); 
