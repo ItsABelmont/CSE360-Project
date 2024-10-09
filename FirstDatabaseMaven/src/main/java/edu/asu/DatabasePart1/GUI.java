@@ -164,8 +164,23 @@ public class GUI extends Application {
 				},
 			"Student", 15, 96, Pos.CENTER, 202, 170);
 		
+		Button backButton = createButton(
+				(event) -> {
+					setLoginPage();
+				},
+			"Back", 15, 76, Pos.CENTER, 212, 250);
+		
 		//Add all of the elements to the page
-		root.getChildren().addAll(title, adminButton, instructorButton, studentButton);
+		root.getChildren().addAll(title, backButton);
+		for (String s : roles) {//Only add each button if the user has the role for it
+			if (s.equals("admin")) {
+				root.getChildren().add(adminButton);
+			} else if (s.equals("instructor")) {
+				root.getChildren().add(instructorButton);
+			} else if (s.equals("student")) {
+				root.getChildren().add(studentButton);
+			}
+		}
 		
 		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
 		
