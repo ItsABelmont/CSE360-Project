@@ -4,7 +4,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Scanner;
-
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 public class StartCSE360 {
@@ -12,21 +13,14 @@ public class StartCSE360 {
 	private static final DatabaseHelper databaseHelper = new DatabaseHelper();
 	private static final Scanner scanner = new Scanner(System.in);
 	private static final Password hashPassword = new Password();
+	public static String userRole = "";
+	public static String email = "";
+	public static String password = "";
 
 	public static void main( String[] args )
 	{
-		try {
-			databaseHelper.connectToDatabase();
-		}
-		catch (SQLException e) {
-			System.err.println("Database error: " + e.getMessage());
-			e.printStackTrace();
-		}
-		
-		GUI.start(databaseHelper);
-		
-		
-		/*try { 
+
+		try { 
 			int length = 8;
 			databaseHelper.connectToDatabase();  // Connect to the database
 			
@@ -45,30 +39,34 @@ public class StartCSE360 {
 					System.out.println("Insert invite code.");
 					String choose = scanner.nextLine();
 					databaseHelper.inviteCode(choose);
-					
-//					if(choose.equals("1")) {
-//						setupAdmin();
-//					}
-//					else if(choose.equals("2")) {
-//						instructorFlow();
-//					}
-//					else {
-//						studentFlow();
-//					}
-					
+					/*
+					if(choose.equals("1")) {
+						setupAdmin();
+					}
+					else if(choose.equals("2")) {
+						instructorFlow();
+					}
+					else {
+						studentFlow();
+					}
+					*/
 					break;
 				case "2":
 					System.out.print("Enter Email: ");
-					String email = scanner.nextLine();
+					String email2 = scanner.nextLine();
+					email = email2;
 					System.out.print("Enter Password: ");
-					String password = scanner.nextLine();
-					if (databaseHelper.login(email, password).equals("admin")) {
-						System.out.println("Login successful!");
-						adminFlow();
-						
-					} else {
+					String password2 = scanner.nextLine();
+					password = password2;
+					
+					userRole = databaseHelper.login(email, password);
+					
+					//if a user has no roles than they do not exist and can not login
+					if (userRole.equals(""))
 						System.out.println("Invalid credentials. Try again!!");
-					}
+					else
+						checkRoles();
+					
 					
 					break;
 				default:
@@ -84,7 +82,7 @@ public class StartCSE360 {
 		finally {
 			System.out.println("Good Bye!!");
 			databaseHelper.closeConnection();
-		}*/
+		}
 	}
 
 	private static void setupAdmin() throws SQLException {		//enhancement
@@ -114,6 +112,7 @@ public class StartCSE360 {
 	    }
 
 	}
+	
 
 	private static void instructorFlow() throws SQLException {		//enhancement
 		String email = null;
@@ -147,7 +146,49 @@ public class StartCSE360 {
 	
 	}
 	
-
+	private static void instructorLogin() throws SQLException {		// enhancement 
+		
+		if(!databaseHelper.getpreferredName().equals("placeholder")) {
+			System.out.println("Hello instructor " + databaseHelper.getpreferredName() + " What would you like to do?");
+		}
+		else if(databaseHelper.getpreferredName().equals("placeholder") && databaseHelper.getFirstName().equals("placeholder")){
+			System.out.println("Looks lik you need to finish setting"
+					+ "up your account!");
+			
+			String preferred = "placeholder";
+			System.out.println("Insert first name: ");
+			String first = scanner.nextLine();
+			System.out.println("Insert middle: ");
+			String middle = scanner.nextLine();
+			
+			System.out.println("Insert last: ");
+			String last = scanner.nextLine();
+			
+			System.out.println("Do you have a preferred name? Y/N");
+			String yn = scanner.nextLine();
+			if(yn.equals("Y")) {
+				System.out.println("Insert prefered: ");
+				
+				preferred = scanner.nextLine();					
+			}
+			
+			databaseHelper.finishRegistration(email, first, middle, last, preferred);
+			System.out.println("Hello, What would you like to do?");
+		}
+		else {
+			System.out.println("Hello instructor " + databaseHelper.getFirstName() + " What would you like to do?");
+		}
+		
+		while(true) {
+			System.out.println("1. Logout");
+			String choice = scanner.nextLine();
+				if(choice.equals("1"))
+					return;
+		}
+		
+	}
+	
+	//registers students
 	private static void studentFlow() throws SQLException {		// enhancement 
 		String email = null;
 		String password = null;
@@ -178,14 +219,78 @@ public class StartCSE360 {
 			System.out.println("Instructor setup completed.");
 	    }
 	}
-
+	
+	//actually logins students
+	private static void studentLogin() throws SQLException {		// enhancement 
+		
+		if(!databaseHelper.getpreferredName().equals("placeholder")) {
+			System.out.println("Hello student " + databaseHelper.getpreferredName() + " What would you like to do?");
+		}
+		else if(databaseHelper.getpreferredName().equals("placeholder") && databaseHelper.getFirstName().equals("placeholder")){
+			System.out.println("Looks lik you need to finish setting"
+					+ "up your account!");
+			
+			String preferred = "placeholder";
+			System.out.println("Insert first name: ");
+			String first = scanner.nextLine();
+			System.out.println("Insert middle: ");
+			String middle = scanner.nextLine();
+			
+			System.out.println("Insert last: ");
+			String last = scanner.nextLine();
+			
+			System.out.println("Do you have a preferred name? Y/N");
+			String yn = scanner.nextLine();
+			if(yn.equals("Y")) {
+				System.out.println("Insert prefered: ");
+				
+				preferred = scanner.nextLine();					
+			}
+			
+			databaseHelper.finishRegistration(email, first, middle, last, preferred);
+			System.out.println("Hello, What would you like to do?");
+		}
+		else {
+			System.out.println("Hello student " + databaseHelper.getFirstName() + " What would you like to do?");
+		}
+		
+		while(true) {
+			System.out.println("1. Logout");
+			String choice = scanner.nextLine();
+				if(choice.equals("1"))
+					return;
+		}
+		
+	}
+	
 	private static void adminFlow() throws SQLException {
-        databaseHelper.displayUsersByAdmin();
-
+       //just test thingie databaseHelper.displayUsersByAdmin();
+		databaseHelper.displayUsersByAdmin();
 		if(!databaseHelper.getpreferredName().equals("placeholder")) {
 			System.out.println("Hello " + databaseHelper.getpreferredName() + " What would you like to do?");
 		}
 		else if(databaseHelper.getpreferredName().equals("placeholder") && databaseHelper.getFirstName().equals("placeholder")){
+			System.out.println("Looks lik you need to finish setting"
+					+ "up your account!");
+			
+			String preferred = "placeholder";
+			System.out.println("Insert first name: ");
+			String first = scanner.nextLine();
+			System.out.println("Insert middle: ");
+			String middle = scanner.nextLine();
+			
+			System.out.println("Insert last: ");
+			String last = scanner.nextLine();
+			
+			System.out.println("Do you have a preferred name? Y/N");
+			String yn = scanner.nextLine();
+			if(yn.equals("Y")) {
+				System.out.println("Insert prefered: ");
+				
+				preferred = scanner.nextLine();					
+			}
+			
+			databaseHelper.finishRegistration(email, first, middle, last, preferred);
 			System.out.println("Hello, What would you like to do?");
 		}
 		else {
@@ -199,10 +304,28 @@ public class StartCSE360 {
 				databaseHelper.displayUsersByAdmin();
 			else if(choice.equals("2"))
 				databaseHelper.deleteUser();
-			else if(choice.equals("3"))
-				databaseHelper.addUserRole();
-			else if(choice.equals("4"))
-				databaseHelper.removeUserRole();
+			else if(choice.equals("3")) {
+				System.out.println("Please choose a user email");
+				String email = scanner.nextLine();
+				System.out.println("Please choose the role to add");
+				String role = scanner.nextLine();
+				if(!role.equals("admin") && !role.equals("student") && !role.equals("instructor")) {
+					System.out.println("That choice is not allowed choose again");
+				}
+				else
+					databaseHelper.addUserRole(email, role);
+			}
+			else if(choice.equals("4")) {
+				System.out.println("Please choose a user email");
+				String email = scanner.nextLine();
+				System.out.println("Please choose the role to remove");
+				String role = scanner.nextLine();
+				if(!role.equals("admin") && !role.equals("student") && !role.equals("instructor")) {
+					System.out.println("That choice is not allowed choose again");
+				}
+				else
+					databaseHelper.removeUserRole(email, role);
+			}
 			else if(choice.equals("5"))
 				generateInviteCode();
 			else if(choice.equals("6"))
@@ -239,10 +362,93 @@ public class StartCSE360 {
 		try {
 			databaseHelper.addInviteUser(invite, role);
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
+		
+	}
+	
+	public static void checkRoles() {
+		try {
+			databaseHelper.displayUsersByAdmin();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		String[] arr = userRole.split(",", 0);
+		
+		boolean admin = false;
+		boolean instructor = false;
+		boolean student = false;
+		
+		int count = arr.length;
+		
+		for(int i = 0; i < arr.length; i++) {   
+		    if(arr[i].equals("admin")) 
+		    	admin = true;
+		    if(arr[i].equals("instructor"))
+		    	instructor = true;
+		    if(arr[i].equals("student")) 
+		    	student = true;
+		} 
+		
+		if(count > 1) {
+			while(true) {
+				System.out.println("Looks like you have multiple role!\nChoose one to login as");
+				if(admin)
+					System.out.println("Admin");
+				if(instructor)
+					System.out.println("Instructor");
+				if(student)
+					System.out.println("Student");
+				String choice = scanner.nextLine();
+				//checks choice
+				if(admin && choice.equals("admin") || choice.equals("Admin"))
+					try {
+						adminFlow();
+						return;
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				else if(instructor && choice.equals("instructor") || choice.equals("Instructor"))
+					try {
+						instructorLogin();
+						return;
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				else if(student && choice.equals("student") || choice.equals("Student"))
+					try {
+						studentLogin();
+						return;
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				else
+					System.out.println("Not a valid choice!");
+			}
+		}
+		else {
+			if(admin)
+				try {
+					adminFlow();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			else if(instructor)
+				try {
+					instructorFlow();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			else
+				try {
+					studentLogin();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+		}
 		
 	}
 
