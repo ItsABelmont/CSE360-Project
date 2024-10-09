@@ -100,7 +100,16 @@ public class GUI extends Application {
 		Button createButton = createButton(
 				(event) -> {
 					if (passwordInput.getText().equals(confirmPasswordInput.getText())) {
-						createFirstAdmin(emailInput.getText(), passwordInput.getText());
+						try {
+							if (databaseHelper.isDatabaseEmpty()) {
+								createFirstAdmin(emailInput.getText(), passwordInput.getText());
+							} else {
+								createAccount(emailInput.getText(), passwordInput.getText());
+							}
+						}
+						catch (SQLException e) {
+							e.printStackTrace();
+						}
 					} else {
 						failCreatePassword(errorMessage, "Passwords do NOT match!");
 					}
@@ -120,11 +129,58 @@ public class GUI extends Application {
 	
 	private static void createFirstAdmin(String email, String password) {
 		//databaseHelper.setupAdmin(email, passwordInput.password);
-		setLoginPage();
+		setSetupAccountPage();
+	}
+	
+	private static void createAccount(String email, String password) {
+		//databaseHelper.setupAdmin(email, passwordInput.password);
+		setSetupAccountPage();
 	}
 	
 	private static void failCreatePassword(Label errorText, String message) {
 		errorText.setText(message);
+	}
+	
+	public static void setSetupAccountPage() {
+		Pane root = new Pane();
+		
+		Label title = createLabel("Finish Account Creation", 40, 512, Pos.CENTER, 0, 0);
+		
+		Label firstTitle = createLabel("First Name:", 15, 128, Pos.CENTER, 128, 70);
+		TextField firstInput = createTextField("", 15, 128, Pos.CENTER, 256, 70);
+		
+		Label middleTitle = createLabel("Middle Name:", 15, 128, Pos.CENTER, 128, 100);
+		TextField middleInput = createTextField("", 15, 128, Pos.CENTER, 256, 100);
+		
+		Label lastTitle = createLabel("Last Name:", 15, 128, Pos.CENTER, 128, 130);
+		TextField lastInput = createTextField("", 15, 128, Pos.CENTER, 256, 130);
+		
+		Label preferredTitle = createLabel("Preferred Name:", 15, 128, Pos.CENTER, 128, 160);
+		TextField preferredInput = createTextField("", 15, 128, Pos.CENTER, 256, 160);
+		
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 220);
+		errorMessage.setTextFill(Color.RED);
+		
+		Button continueButton = createButton(
+				(event) -> {
+					setupInformation(firstInput.getText(), middleInput.getText(), lastInput.getText(), preferredInput.getText());
+				},
+			"Continue", 15, 64, Pos.CENTER, 218, 240);
+		
+		root.getChildren().addAll(title, firstTitle, firstInput, middleTitle,
+				middleInput, lastTitle, lastInput, preferredTitle, preferredInput,
+				continueButton, errorMessage);
+		
+		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
+		
+		appStage.setScene(scene);
+		
+		appStage.show();
+	}
+	
+	private static void setupInformation(String first, String middle, String last, String preferred) {
+		//databaseHelper.AAAA();
+		setLoginPage();
 	}
 	
 	/**
