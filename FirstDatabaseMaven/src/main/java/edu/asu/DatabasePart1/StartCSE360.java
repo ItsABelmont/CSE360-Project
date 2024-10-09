@@ -5,6 +5,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Scanner;
 
+import javafx.application.Application;
+import javafx.stage.Stage;
+
 public class StartCSE360 {
 
 	private static final DatabaseHelper databaseHelper = new DatabaseHelper();
@@ -12,7 +15,8 @@ public class StartCSE360 {
 
 	public static void main( String[] args )
 	{
-
+		//GUI.main(args);
+		
 		try { 
 			
 			databaseHelper.connectToDatabase();  // Connect to the database
