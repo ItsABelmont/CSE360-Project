@@ -92,6 +92,82 @@ class DatabaseHelper {
 		}
 	}
 	
+	/**
+	 * 
+	 * @param email
+	 * @param password
+	 * @return
+	 * @throws SQLException
+	 */
+	public String tryLogin(String email, String password) {
+		String query = "SELECT * FROM cse360users WHERE email = ? AND password = ? AND role = ?";
+		String sql = "SELECT * FROM cse360users"; 
+
+		//The main changes for random
+		String save = "";
+		String pass = "";
+		try {
+			Statement stmt;
+			stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(sql); 
+			
+			
+			while(rs.next()) {
+				if(rs.getString("email").equals(email)) {
+					pass = rs.getString("random");
+				}
+			}
+			//resets it if i introduce it again
+			rs = stmt.executeQuery(sql);
+			int count = 0;
+		
+			while(rs.next()) { 
+				if(rs.getString("email").equals(email) && rs.getString("firstName").equals("placeholder")) {
+					System.out.println("Finish Setting up your account");
+					finishRegistration(email);
+				}
+				if(rs.getString("email").equals(email) && rs.getString("password").equals(Password.hashFull(password, pass))) {
+					if(count == 0) {
+						save = rs.getString("role");
+						this.universalfirstName = rs.getString("firstName");
+						this.universalpreferredName = rs.getString("preferredName");
+					}
+					else {
+						System.out.println(rs.getString("role"));
+					}
+					this.universalfirstName = rs.getString("firstName");
+					this.universalpreferredName = rs.getString("preferredName");
+					count++;
+				}
+			} 
+			
+			
+			if(count > 1) {
+				System.out.println(save);
+				System.out.println("Looks like you have more than one role!\nWhich one would you like to login as?");
+				//save = scanner.nextLine();
+				this.universalRole = save;
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		//System.out.println("HELLO, " + save);
+
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1, email);
+			pstmt.setString(2, Password.hash(password + pass));
+			pstmt.setString(3, save);
+			try (ResultSet RS = pstmt.executeQuery()) {
+				return save;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return "";
+	}
 	
 	public String login(String email, String password) throws SQLException {
 		String query = "SELECT * FROM cse360users WHERE email = ? AND password = ? AND role = ?";

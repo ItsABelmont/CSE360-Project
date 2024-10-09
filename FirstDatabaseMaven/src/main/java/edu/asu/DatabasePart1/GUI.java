@@ -67,6 +67,9 @@ public class GUI extends Application {
 	public static void setLoginPage() {
 		Pane root = new Pane();
 		
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 170);
+		errorMessage.setTextFill(Color.RED);
+		
 		//The big title of the page
 		Label title = createLabel("Help System Login", 50, 512, Pos.CENTER, 0, 0);
 		
@@ -78,8 +81,20 @@ public class GUI extends Application {
 		Label passwordTitle = createLabel("Password:", 15, 512, Pos.CENTER, 0, 120);
 		TextField passwordInput = createPasswordField(15, 256, Pos.CENTER, 128, 140);
 		
+		Button loginButton = createButton(
+				(event) -> {
+//					boolean loggedIn = databaseHelper.login(emailInput.getText(), passwordInput.getText());
+//					if (loggedIn) {
+//						setLoggingInPage();
+//					} else {
+//						failCreateAccount(errorMessage, "Invalid email or password");
+//					}
+				},
+			"Continue", 15, 64, Pos.CENTER, 218, 190);
+		
 		//Add all of the elements to the page
-		root.getChildren().addAll(title, emailTitle, emailInput, passwordTitle, passwordInput);
+		root.getChildren().addAll(title, emailTitle, emailInput, passwordTitle, passwordInput,
+				loginButton, errorMessage);
 		
 		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
 		
