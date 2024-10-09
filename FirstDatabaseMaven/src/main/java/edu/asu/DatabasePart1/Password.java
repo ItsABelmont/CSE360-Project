@@ -2,6 +2,7 @@ package edu.asu.DatabasePart1;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Random;
 
 /**
  * This static class provides methods to hash a password
@@ -66,4 +67,21 @@ public class Password {
 	private static int byteToHexLow(byte oneByte) {
 		return oneByte & 15;
 	}
+	
+	public static String generateRandomString(int length) {
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        Random random = new Random();
+        StringBuilder sb = new StringBuilder(length);
+
+        for (int i = 0; i < length; i++) {
+            int index = random.nextInt(characters.length());
+            sb.append(characters.charAt(index));
+        }
+
+        return sb.toString();
+    }
 }
+
+
+
+
