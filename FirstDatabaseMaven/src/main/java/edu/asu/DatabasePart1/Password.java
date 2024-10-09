@@ -4,10 +4,14 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
- * This static class provides methods to hash a password
+ * <p> Password Class </p>
  * 
- * @author Just Wise
+ * <p> Description: This static class provides methods to hash a password </p>
+ * 
+ * @author	Just Wise
  *
+ * @version 1.00	2024-10-08 (some description)
+ * 
  */
 public class Password {
 	/**
