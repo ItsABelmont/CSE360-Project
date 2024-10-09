@@ -8,6 +8,16 @@ import java.util.Scanner;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
+/**
+ * <p> StartCSE360 Class </p>
+ * 
+ * <p> Description: ... </p>
+ * 
+ * @authors Lynn Robert Carter (students names)
+ * 
+ * @version 1.00	2024-10-08  (some description)
+ * 
+ */
 public class StartCSE360 {
 
 	private static final DatabaseHelper databaseHelper = new DatabaseHelper();

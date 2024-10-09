@@ -2,6 +2,16 @@ package edu.asu.DatabasePart1;
 import java.sql.*;
 import java.util.Scanner;
 
+/*******
+ * <p> DatabaseHelper Class </p>
+ * 
+ * <p> Description: ..... </p>
+ * 
+ * @authors Lynn Robert Carter (student's name)
+ * 
+ * @version 1.00	2024-10-08  A set of ....
+ * 
+ */
 class DatabaseHelper {
 
 	// JDBC driver name and database URL 

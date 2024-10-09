@@ -7,6 +7,17 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
+/**
+ * <p> GUI Class </p>
+ * 
+ * <p> Description: ... </p>
+ * 
+ * @authors (student's name)
+ * 
+ * @version 1.00	2024-10-08  (some description)
+ * 
+ */
+
 public class GUI extends Application {
 
 	public static void start(String[] args) {
