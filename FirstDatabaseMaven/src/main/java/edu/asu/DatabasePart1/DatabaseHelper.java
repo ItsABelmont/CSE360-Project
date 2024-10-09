@@ -1,5 +1,6 @@
 package edu.asu.DatabasePart1;
 import java.sql.*;
+import java.util.Random;
 import java.util.Scanner;
 
 class DatabaseHelper {
@@ -7,6 +8,7 @@ class DatabaseHelper {
 	// JDBC driver name and database URL 
 	static final String JDBC_DRIVER = "org.h2.Driver";   
 	static final String DB_URL = "jdbc:h2:~/firstDatabase";  
+	private static final Password hashPassword = new Password();
 
 	//  Database credentials 
 	static final String USER = "sa"; 
@@ -42,7 +44,8 @@ class DatabaseHelper {
 				+ "middleName VARCHAR(255), "
 				+ "lastName VARCHAR(255), "
 				+ "preferredName VARCHAR(255), "
-				+ "role VARCHAR(20))";
+				+ "role VARCHAR(20), "
+				+ "random VARCHAR(255))";
 		statement.execute(userTable);
 	}
 
@@ -58,15 +61,18 @@ class DatabaseHelper {
 	}
 	
 	public void register(String email, String password, String role) throws SQLException {
-		String insertUser = "INSERT INTO cse360users (email, password, firstName, middleName, lastName, preferredName, role) VALUES (?, ?, ?, ?, ?, ?, ?)";
+		String insertUser = "INSERT INTO cse360users (email, password, firstName, middleName, lastName, preferredName, role, random) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+		String random = hashPassword.generateRandomString(8);
+		System.out.println(random);
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
 			pstmt.setString(1, email);
-			pstmt.setString(2, password);
+			pstmt.setString(2, hashPassword.hashFull(password, random));
 			pstmt.setString(3, "placeholder");
 			pstmt.setString(4, "placeholder");
 			pstmt.setString(5, "placeholder");
 			pstmt.setString(6, "placeholder");
 			pstmt.setString(7, role);
+			pstmt.setString(8, random);
 			pstmt.executeUpdate();
 		}
 	}
@@ -78,10 +84,19 @@ class DatabaseHelper {
 		String sql = "SELECT * FROM cse360users"; 
 		Statement stmt = connection.createStatement();
 		ResultSet rs = stmt.executeQuery(sql); 
+		
+		//The main changes for random
 		String save = "";
 		
-		int count = 0;
-		
+		while(rs.next()) {
+			if(rs.getString("email").equals(email)) {
+				save = rs.getString("random");
+			}
+		}
+		//resets it if i introduce it again
+		rs = stmt.executeQuery(sql);
+	/*	int count = 0;
+	/*
 		while(rs.next()) { 
 			if(rs.getString("email").equals(email) && rs.getString("firstName").equals("placeholder")) {
 				System.out.println("Finish Setting up your account");
@@ -101,18 +116,19 @@ class DatabaseHelper {
 				count++;
 			}
 		} 
-		
-		
+		*/
+		/*
 		if(count > 1) {
 			System.out.println(save);
 			System.out.println("Looks like you have more than one role!\nWhich one would you like to login as?");
 			save = scanner.nextLine();
 		}
+		*/
 
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
 			pstmt.setString(1, email);
-			pstmt.setString(2, password);
-			pstmt.setString(3, save);
+			pstmt.setString(2, hashPassword.hash(password + save));
+			pstmt.setString(3, "admin");
 			try (ResultSet RS = pstmt.executeQuery()) {
 				this.role = save;
 				return RS.next();
@@ -131,7 +147,27 @@ class DatabaseHelper {
 		return this.preferredName;
 	}
 	
+	public void inviteCode(String invite) throws SQLException{
+		String sql = "SELECT * FROM cse360users"; 
+		Statement stmt = connection.createStatement();
+		ResultSet rs = stmt.executeQuery(sql); 
+		
+		while(rs.next()){
+			if(rs.getString("password").equals(invite)) {
+				System.out.println("Huzzah! It works");
+			}
+		}
+		
+	}
 	
+	public void addInviteUser(String invite, String role) throws SQLException{
+		String insertUser = "INSERT INTO cse360users (password, role) VALUES (?, ?)";
+		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)){
+			pstmt.setString(1, invite);
+			pstmt.setString(2, role);
+			pstmt.executeUpdate();
+		}
+	}
 	
 	public void finishRegistration(String email) throws SQLException{
 		Scanner scanner = new Scanner(System.in);
@@ -158,7 +194,6 @@ class DatabaseHelper {
 				int rowAffected = statement.executeUpdate();
 				this.preferredName = preferred;
 
-				System.out.println("row affected" + rowAffected);
 			}
 		}
 		//to get middle and last just keeping repeating this code over and over
@@ -171,7 +206,6 @@ class DatabaseHelper {
 			int rowAffected = statement.executeUpdate();
 			this.firstName = first;
 
-			System.out.println("row affected" + rowAffected);
 		}
 		
 		sql = "UPDATE cse360users SET middleName = ? WHERE email = ?";
@@ -180,7 +214,6 @@ class DatabaseHelper {
 			statement.setString(1, middle);
 			statement.setString(2, email);
 			int rowAffected = statement.executeUpdate();
-			System.out.println("row affected" + rowAffected);
 		}
 		
 		sql = "UPDATE cse360users SET lastName = ? WHERE email = ?";
@@ -189,7 +222,6 @@ class DatabaseHelper {
 			statement.setString(1, last);
 			statement.setString(2, email);
 			int rowAffected = statement.executeUpdate();
-			System.out.println("row affected" + rowAffected);
 		}
 		
 		
@@ -358,6 +390,9 @@ class DatabaseHelper {
 			System.out.println(", Last: " + role); 
 		} 
 	}
+	
+	//produces random string
+	
 	
 	public Connection getConnection() {
 	    return connection;
