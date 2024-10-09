@@ -58,19 +58,20 @@ class DatabaseHelper {
 	}
 	
 	public void register(String email, String password, String role) throws SQLException {
-		String insertUser = "INSERT INTO cse360users (email, password, firstName, middleName, lastName, preferredName, role) VALUES (?, ?, ?, ?, ?, ?, ?)";
-		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
-			pstmt.setString(1, email);
-			pstmt.setString(2, password);
-			pstmt.setString(3, "placeholder");
-			pstmt.setString(4, "placeholder");
-			pstmt.setString(5, "placeholder");
-			pstmt.setString(6, "placeholder");
-			pstmt.setString(7, role);
-			pstmt.executeUpdate();
-		}
+	    // Using double quotes around column names to ensure exact case is respected
+	    String insertUser = "INSERT INTO cse360users (\"email\", \"password\", \"firstName\", \"middleName\", \"lastName\", \"preferredName\", \"role\") VALUES (?, ?, ?, ?, ?, ?, ?)";
+	    try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
+	        pstmt.setString(1, email);
+	        pstmt.setString(2, password);
+	        pstmt.setString(3, "placeholder");
+	        pstmt.setString(4, "placeholder");
+	        pstmt.setString(5, "placeholder");
+	        pstmt.setString(6, "placeholder");
+	        pstmt.setString(7, role);
+	        pstmt.executeUpdate();
+	    }
 	}
-	
+
 	
 	public boolean login(String email, String password) throws SQLException {
 		String query = "SELECT * FROM cse360users WHERE email = ? AND password = ? AND role = ?";
