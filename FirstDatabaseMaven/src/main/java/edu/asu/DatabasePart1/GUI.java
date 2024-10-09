@@ -11,6 +11,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -26,6 +27,8 @@ public class GUI extends Application {
 	
 	private static Stage appStage;
 	private static DatabaseHelper databaseHelper;
+	
+	public static String loginPreferredName;
 	
 	public static final double WINDOW_WIDTH = 512;
 	public static final double WINDOW_HEIGHT = 384;
@@ -46,6 +49,13 @@ public class GUI extends Application {
 	@Override
 	public void start(Stage stage) throws Exception {
 		appStage = stage;
+		
+		appStage.getIcons().add(new Image(GUI.class.getResourceAsStream("/edu/asu/DatabasePart1/Icon.png")));
+		
+		//Prevent the window from being resized
+		appStage.setResizable(false);
+		
+		//Add a title to the window
 		appStage.setTitle("Help System");
 		
 		try {
@@ -67,6 +77,7 @@ public class GUI extends Application {
 	public static void setLoginPage() {
 		Pane root = new Pane();
 		
+		//This error message text will only show if text is added to it
 		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 170);
 		errorMessage.setTextFill(Color.RED);
 		
@@ -81,20 +92,108 @@ public class GUI extends Application {
 		Label passwordTitle = createLabel("Password:", 15, 512, Pos.CENTER, 0, 120);
 		TextField passwordInput = createPasswordField(15, 256, Pos.CENTER, 128, 140);
 		
+		//Pressing this button will cause the system to try logging in with the credentials in the text fields
 		Button loginButton = createButton(
 				(event) -> {
-//					boolean loggedIn = databaseHelper.login(emailInput.getText(), passwordInput.getText());
-//					if (loggedIn) {
-//						setLoggingInPage();
-//					} else {
-//						failCreateAccount(errorMessage, "Invalid email or password");
-//					}
+					//Try logging in to the database and get the array of possible roles the user has
+					String[] roles = new String[] {"admin", "instructor"};
+					//databaseHelper.login(emailInput.getText(), passwordInput.getText());
+					if (roles.length > 0) {
+						setLoggingInPage(roles);
+					} else {//If there are no roles, the login failed and there was no login with those credentials
+						failCreateAccount(errorMessage, "Invalid email or password");
+					}
 				},
-			"Continue", 15, 64, Pos.CENTER, 218, 190);
+			"Login", 15, 64, Pos.CENTER, 218, 190);
 		
 		//Add all of the elements to the page
 		root.getChildren().addAll(title, emailTitle, emailInput, passwordTitle, passwordInput,
 				loginButton, errorMessage);
+		
+		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
+		
+		appStage.setScene(scene);
+		
+		appStage.show();
+	}
+	
+	/**
+	 * This method sets up the page to ask for a user's login role
+	 */
+	public static void setLoggingInPage(String[] roles) {
+		loginPreferredName = databaseHelper.getpreferredName();
+		
+		if (roles.length == 1) {
+			if (roles[0].equals("admin")) {
+				//setAdminPage();
+				return;
+			} else if (roles[0].equals("instructor")) {
+				//setInstructor);
+				return;
+			} else if (roles[0].equals("student")) {
+				//setStudentPage();
+				return;
+			} else {
+				return;
+			}
+		}
+		
+		Pane root = new Pane();
+		
+		//Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 170);
+		//errorMessage.setTextFill(Color.RED);
+		
+		//The big title of the page
+		Label title = createLabel("Select a Role", 50, 512, Pos.CENTER, 0, 0);
+		
+		Button adminButton = createButton(
+				(event) -> {
+					setAdminPage();
+				},
+			"Admin", 15, 96, Pos.CENTER, 202, 70);
+		
+		Button instructorButton = createButton(
+				(event) -> {
+					//setInstructorPage();
+				},
+			"Instructor", 15, 96, Pos.CENTER, 202, 120);
+		
+		Button studentButton = createButton(
+				(event) -> {
+					//setStudentPage();
+				},
+			"Student", 15, 96, Pos.CENTER, 202, 170);
+		
+		//Add all of the elements to the page
+		root.getChildren().addAll(title, adminButton, instructorButton, studentButton);
+		
+		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
+		
+		appStage.setScene(scene);
+		
+		appStage.show();
+	}
+	
+	/**
+	 * This method sets up the admin page after logging in
+	 */
+	public static void setAdminPage() {
+		Pane root = new Pane();
+		
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 170);
+		errorMessage.setTextFill(Color.RED);
+		
+		//The big title of the page
+		Label title = createLabel("HELLO, " + loginPreferredName, 30, 512, Pos.CENTER, 0, 0);
+		
+		Button logoutButton = createButton(
+				(event) -> {
+					setLoginPage();
+				},
+			"Logout", 15, 64, Pos.CENTER, 438, 10);
+		
+		//Add all of the elements to the page
+		root.getChildren().addAll(title, logoutButton, errorMessage);
 		
 		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
 		
