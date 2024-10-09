@@ -15,7 +15,7 @@ public class StartCSE360 {
 
 	public static void main( String[] args )
 	{
-		GUI.main(args);
+		GUI.start(args);
 		
 		try { 
 			
@@ -182,21 +182,21 @@ public class StartCSE360 {
 			System.out.println("Hello " + databaseHelper.getFirstName() + " What would you like to do?");
 		}
 		
-		while(true) {
-		System.out.println("1. Print Users\n2. Delete User\n3. Add user role\n4. Remove user role\n5. logout");
-		String choice = scanner.nextLine();
-			if(choice.equals("1"))
-				databaseHelper.displayUsersByAdmin();
-			else if(choice.equals("2"))
-				databaseHelper.deleteUser();
-			else if(choice.equals("3"))
-				databaseHelper.addUserRole();
-			else if(choice.equals("4"))
-				databaseHelper.removeUserRole();
-			else if(choice.equals("5"))
-				return;
-			else
-				System.out.println("Not valid choose a number");
+		while (true) {
+			System.out.println("1. Print Users\n2. Delete User\n3. Add user role\n4. Remove user role\n5. logout");
+			String choice = scanner.nextLine();
+				if(choice.equals("1"))
+					databaseHelper.displayUsersByAdmin();
+				else if(choice.equals("2"))
+					databaseHelper.deleteUser();
+				else if(choice.equals("3"))
+					databaseHelper.addUserRole();
+				else if(choice.equals("4"))
+					databaseHelper.removeUserRole();
+				else if(choice.equals("5"))
+					return;
+				else
+					System.out.println("Not valid choose a number");
 		}
 	}
 
