@@ -5,32 +5,31 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Scanner;
 
-import javafx.application.Application;
-import javafx.stage.Stage;
+import java.util.Random;
 
-/**
- * <p> StartCSE360 Class </p>
- * 
- * <p> Description: ... </p>
- * 
- * @authors Lynn Robert Carter (students names)
- * 
- * @version 1.00	2024-10-08  (some description)
- * 
- */
 public class StartCSE360 {
 
 	private static final DatabaseHelper databaseHelper = new DatabaseHelper();
 	private static final Scanner scanner = new Scanner(System.in);
+	private static final Password hashPassword = new Password();
 
 	public static void main( String[] args )
 	{
-		GUI.start(args);
+		try {
+			databaseHelper.connectToDatabase();
+		}
+		catch (SQLException e) {
+			System.err.println("Database error: " + e.getMessage());
+			e.printStackTrace();
+		}
 		
-		try { 
-			
+		GUI.start(databaseHelper);
+		
+		
+		/*try { 
+			int length = 8;
 			databaseHelper.connectToDatabase();  // Connect to the database
-
+			
 			// Check if the database is empty (no users registered)
 			if (databaseHelper.isDatabaseEmpty()) {
 				System.out.println( "In-Memory Database  is empty" );
@@ -43,29 +42,30 @@ public class StartCSE360 {
 
 				switch (choice) {
 				case "1":
-					System.out.println("What would you like to register as?\n1. Admin\n2. Instructor\n3. Student");
+					System.out.println("Insert invite code.");
 					String choose = scanner.nextLine();
-					if(choose.equals("1")) {
-						setupAdmin();
-					}
-					else if(choose.equals("2")) {
-						instructorFlow();
-					}
-					else {
-						studentFlow();
-					}
+					databaseHelper.inviteCode(choose);
+					
+//					if(choose.equals("1")) {
+//						setupAdmin();
+//					}
+//					else if(choose.equals("2")) {
+//						instructorFlow();
+//					}
+//					else {
+//						studentFlow();
+//					}
+					
 					break;
 				case "2":
 					System.out.print("Enter Email: ");
 					String email = scanner.nextLine();
 					System.out.print("Enter Password: ");
 					String password = scanner.nextLine();
-					if (databaseHelper.login(email, password)) {
+					if (databaseHelper.login(email, password).equals("admin")) {
 						System.out.println("Login successful!");
-						if(databaseHelper.getRole().equals("admin")) {
-							adminFlow();
-						}
-
+						adminFlow();
+						
 					} else {
 						System.out.println("Invalid credentials. Try again!!");
 					}
@@ -84,7 +84,7 @@ public class StartCSE360 {
 		finally {
 			System.out.println("Good Bye!!");
 			databaseHelper.closeConnection();
-		}
+		}*/
 	}
 
 	private static void setupAdmin() throws SQLException {		//enhancement
@@ -192,22 +192,58 @@ public class StartCSE360 {
 			System.out.println("Hello " + databaseHelper.getFirstName() + " What would you like to do?");
 		}
 		
-		while (true) {
-			System.out.println("1. Print Users\n2. Delete User\n3. Add user role\n4. Remove user role\n5. logout");
-			String choice = scanner.nextLine();
-				if(choice.equals("1"))
-					databaseHelper.displayUsersByAdmin();
-				else if(choice.equals("2"))
-					databaseHelper.deleteUser();
-				else if(choice.equals("3"))
-					databaseHelper.addUserRole();
-				else if(choice.equals("4"))
-					databaseHelper.removeUserRole();
-				else if(choice.equals("5"))
-					return;
-				else
-					System.out.println("Not valid choose a number");
+		while(true) {
+		System.out.println("1. Print Users\n2. Delete User\n3. Add user role\n4. Remove user role\n5. Generate Invite Code\n6. Logout");
+		String choice = scanner.nextLine();
+			if(choice.equals("1"))
+				databaseHelper.displayUsersByAdmin();
+			else if(choice.equals("2"))
+				databaseHelper.deleteUser();
+			else if(choice.equals("3"))
+				databaseHelper.addUserRole();
+			else if(choice.equals("4"))
+				databaseHelper.removeUserRole();
+			else if(choice.equals("5"))
+				generateInviteCode();
+			else if(choice.equals("6"))
+				return;
+			else
+				System.out.println("Not valid choose a number");
 		}
+	}
+	
+	//makes random strings for new hashs
+
+	
+	//add random string to end of the password
+	
+	public static void generateInviteCode() {
+		String role = "";
+		int length = 8;
+		
+		System.out.println("What role would you like the user to have?");
+		System.out.println("1. Admin\n2.Instructor\n3.Student");
+		
+		String choose = scanner.nextLine();
+		
+		if(choose.equals("1"))
+			role = "admin";
+		else if(choose.equals("2"))
+			role = "instructor";
+		else 
+			role = "student";
+		
+		String invite = hashPassword.hash(hashPassword.generateRandomString(length));
+		System.out.println("Here is the invite code.");
+		System.out.println(invite);
+		try {
+			databaseHelper.addInviteUser(invite, role);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		
 	}
 
 
