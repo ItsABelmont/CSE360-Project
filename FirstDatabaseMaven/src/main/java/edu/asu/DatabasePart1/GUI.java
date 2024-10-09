@@ -125,13 +125,13 @@ public class GUI extends Application {
 		
 		if (roles.length == 1) {
 			if (roles[0].equals("admin")) {
-				//setAdminPage();
+				setAdminPage();
 				return;
 			} else if (roles[0].equals("instructor")) {
-				//setInstructor);
+				setInstructorPage();
 				return;
 			} else if (roles[0].equals("student")) {
-				//setStudentPage();
+				setStudentPage();
 				return;
 			} else {
 				return;
@@ -154,13 +154,13 @@ public class GUI extends Application {
 		
 		Button instructorButton = createButton(
 				(event) -> {
-					//setInstructorPage();
+					setInstructorPage();
 				},
 			"Instructor", 15, 96, Pos.CENTER, 202, 120);
 		
 		Button studentButton = createButton(
 				(event) -> {
-					//setStudentPage();
+					setStudentPage();
 				},
 			"Student", 15, 96, Pos.CENTER, 202, 170);
 		
@@ -193,6 +193,62 @@ public class GUI extends Application {
 	 * This method sets up the admin page after logging in
 	 */
 	public static void setAdminPage() {
+		Pane root = new Pane();
+		
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 170);
+		errorMessage.setTextFill(Color.RED);
+		
+		//The big title of the page
+		Label title = createLabel("HELLO, " + loginPreferredName, 30, 512, Pos.CENTER, 0, 0);
+		
+		Button logoutButton = createButton(
+				(event) -> {
+					setLoginPage();
+				},
+			"Logout", 15, 64, Pos.CENTER, 438, 10);
+		
+		//Add all of the elements to the page
+		root.getChildren().addAll(title, logoutButton, errorMessage);
+		
+		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
+		
+		appStage.setScene(scene);
+		
+		appStage.show();
+	}
+	
+	/**
+	 * This method sets up the instructor page after logging in
+	 */
+	public static void setInstructorPage() {
+		Pane root = new Pane();
+		
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 170);
+		errorMessage.setTextFill(Color.RED);
+		
+		//The big title of the page
+		Label title = createLabel("HELLO, " + loginPreferredName, 30, 512, Pos.CENTER, 0, 0);
+		
+		Button logoutButton = createButton(
+				(event) -> {
+					setLoginPage();
+				},
+			"Logout", 15, 64, Pos.CENTER, 438, 10);
+		
+		//Add all of the elements to the page
+		root.getChildren().addAll(title, logoutButton, errorMessage);
+		
+		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
+		
+		appStage.setScene(scene);
+		
+		appStage.show();
+	}
+	
+	/**
+	 * This method sets up the student page after logging in
+	 */
+	public static void setStudentPage() {
 		Pane root = new Pane();
 		
 		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 170);
