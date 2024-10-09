@@ -1,15 +1,13 @@
 package edu.asu.DatabasePart1;
 
-/*******
- * <p> PasswordAddressTestbed Class </p>
+/**
+ * <p> PasswordTestBed Class </p>
  * 
- * <p> Description: A JavaFX demonstration application and baseline for a sequence of projects </p>
- * 
- * <p> Copyright: Lynn Robert Carter © 2022 </p>
+ * <p> Description: A Java demonstration for comparing the hash of two passwords </p>
  * 
  * @author Reem Helal
  * 
- * @version 1.00	2024-10-08 
+ * @version 1.00	2024-10-08  A set of semi-automated test cases
  * 
  */
 
@@ -25,7 +23,7 @@ public class PasswordTestBed {
         performTestCase(1, "password123", "password123");   // Test case 1, same password, expected to pass
         performTestCase(2, "Password!@", "Password!@");   // Test case 2, same password with special chars, expected to pass
         performTestCase(3, "mypassword", "differentPassword"); // Test case 3, different passwords, expected to fail
-        performTestCase(4, "12345", "12345");                // Test case 4, numeric passowrds, expected to pass
+        performTestCase(4, "12345", "12345");                // Test case 4, numeric passwords, expected to pass
         performTestCase(5, "samePassword", "samePassword");  // Test case 5, identical passwords, expected to pass
         
         // Print how many tests passed and how many failed
@@ -56,7 +54,8 @@ public class PasswordTestBed {
             System.out.println("***Success*** The passwords <" + password1 + "> and <" + password2 + "> produce the same hash.");
             numPassed++;
         } else {
-            // Failure if the hashes don't match
+            //Failure if the hashes don't match 
+        	//When Failure happens, print out hash2 and hash2
             System.out.println("***Failure*** The passwords <" + password1 + "> and <" + password2 + "> do not produce the same hash.");
             System.out.println("Hash 1: " + hash1);
             System.out.println("Hash 2: " + hash2);
