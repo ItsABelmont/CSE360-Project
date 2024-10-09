@@ -15,9 +15,17 @@ public class StartCSE360 {
 
 	public static void main( String[] args )
 	{
-		GUI.start(args);
+		try {
+			databaseHelper.connectToDatabase();
+		}
+		catch (SQLException e) {
+			System.err.println("Database error: " + e.getMessage());
+			e.printStackTrace();
+		}
 		
-		try { 
+		GUI.start(databaseHelper);
+		
+		/*try { 
 			
 			databaseHelper.connectToDatabase();  // Connect to the database
 
@@ -74,7 +82,7 @@ public class StartCSE360 {
 		finally {
 			System.out.println("Good Bye!!");
 			databaseHelper.closeConnection();
-		}
+		}*/
 	}
 
 	private static void setupAdmin() throws SQLException {		//enhancement
