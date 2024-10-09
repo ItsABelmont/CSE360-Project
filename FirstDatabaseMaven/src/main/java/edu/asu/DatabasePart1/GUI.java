@@ -126,17 +126,20 @@ public class GUI extends Application {
 						if (emptyDatabase) {
 							createFirstAdmin(emailInput.getText(), passwordInput.getText());
 						} else {
-							boolean validCode = true;//true for now but ONLY UNTIL THE METHOD EXISTS
-							//validCode = databaseHelper.inviteCode(codeInput.getText());
-							createAccount(emailInput.getText(), passwordInput.getText());
+							String inviteCode = codeInput.getText();
+							boolean validCode = databaseHelper.validateInviteCode(inviteCode);
+							if (validCode)
+								createAccount(emailInput.getText(), passwordInput.getText(), databaseHelper.getInviteCodeRole(inviteCode));
+							else
+								failCreateAccount(errorMessage, "Invite code is INVALID!");
 						}
 					} else {
-						failCreatePassword(errorMessage, "Passwords do NOT match!");
+						failCreateAccount(errorMessage, "Passwords do NOT match!");
 					}
 				},
 			"Continue", 15, 64, Pos.CENTER, 218, 290);
 		
-		if (emptyDatabase)
+		if (!emptyDatabase)
 			root.getChildren().addAll(codeTitle, codeInput);
 		root.getChildren().addAll(title, emailTitle, emailInput, passwordTitle,
 				passwordInput, confirmPasswordTitle, confirmPasswordInput,
@@ -150,16 +153,16 @@ public class GUI extends Application {
 	}
 	
 	private static void createFirstAdmin(String email, String password) {
-		//databaseHelper.setupAdmin(email, passwordInput.password);
+		databaseHelper.register(email, password, "admin");
 		setSetupAccountPage();
 	}
 	
-	private static void createAccount(String email, String password) {
-		//databaseHelper.setupAdmin(email, passwordInput.password);
+	private static void createAccount(String email, String password, String role) {
+		databaseHelper.register(email, password, role);
 		setSetupAccountPage();
 	}
 	
-	private static void failCreatePassword(Label errorText, String message) {
+	private static void failCreateAccount(Label errorText, String message) {
 		errorText.setText(message);
 	}
 	

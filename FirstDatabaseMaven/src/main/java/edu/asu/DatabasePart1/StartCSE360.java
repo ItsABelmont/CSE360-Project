@@ -15,8 +15,18 @@ public class StartCSE360 {
 
 	public static void main( String[] args )
 	{
-
-		try { 
+		try {
+			databaseHelper.connectToDatabase();
+		}
+		catch (SQLException e) {
+			System.err.println("Database error: " + e.getMessage());
+			e.printStackTrace();
+		}
+		
+		GUI.start(databaseHelper);
+		
+		
+		/*try { 
 			int length = 8;
 			databaseHelper.connectToDatabase();  // Connect to the database
 			
@@ -35,17 +45,17 @@ public class StartCSE360 {
 					System.out.println("Insert invite code.");
 					String choose = scanner.nextLine();
 					databaseHelper.inviteCode(choose);
-					/*
-					if(choose.equals("1")) {
-						setupAdmin();
-					}
-					else if(choose.equals("2")) {
-						instructorFlow();
-					}
-					else {
-						studentFlow();
-					}
-					*/
+					
+//					if(choose.equals("1")) {
+//						setupAdmin();
+//					}
+//					else if(choose.equals("2")) {
+//						instructorFlow();
+//					}
+//					else {
+//						studentFlow();
+//					}
+					
 					break;
 				case "2":
 					System.out.print("Enter Email: ");
@@ -74,7 +84,7 @@ public class StartCSE360 {
 		finally {
 			System.out.println("Good Bye!!");
 			databaseHelper.closeConnection();
-		}
+		}*/
 	}
 
 	private static void setupAdmin() throws SQLException {		//enhancement

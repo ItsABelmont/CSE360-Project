@@ -6,9 +6,8 @@ import java.util.Scanner;
 class DatabaseHelper {
 
 	// JDBC driver name and database URL 
-	static final String JDBC_DRIVER = "org.h2.Driver";   
-	static final String DB_URL = "jdbc:h2:~/firstDatabase";  
-	private static final Password hashPassword = new Password();
+	static final String JDBC_DRIVER = "org.h2.Driver";
+	static final String DB_URL = "jdbc:h2:~/firstDatabase";
 
 	//  Database credentials 
 	static final String USER = "sa"; 
@@ -65,12 +64,12 @@ class DatabaseHelper {
 		return true;
 	}
 	
-	public void register(String email, String password, String role) throws SQLException {
+	public void register(String email, String password, String role) {
 		String insertUser = "INSERT INTO cse360users (email, password, firstName, middleName, lastName, preferredName, role, random) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-		String random = hashPassword.generateRandomString(8);
+		String random = Password.generateRandomString(8);
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
 			pstmt.setString(1, email);
-			pstmt.setString(2, hashPassword.hashFull(password, random));
+			pstmt.setString(2, Password.hashFull(password, random));
 			pstmt.setString(3, "placeholder");
 			pstmt.setString(4, "placeholder");
 			pstmt.setString(5, "placeholder");
@@ -78,6 +77,8 @@ class DatabaseHelper {
 			pstmt.setString(7, role);
 			pstmt.setString(8, random);
 			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 		insertUser = "INSERT INTO invite (invite, role) VALUES (?, ?)";
 
@@ -86,6 +87,8 @@ class DatabaseHelper {
 			pstmt.setString(2, "roles");
 			pstmt.executeUpdate();
 
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 	}
 	
@@ -115,7 +118,7 @@ class DatabaseHelper {
 				System.out.println("Finish Setting up your account");
 				finishRegistration(email);
 			}
-			if(rs.getString("email").equals(email) && rs.getString("password").equals(hashPassword.hash(password + pass))) {
+			if(rs.getString("email").equals(email) && rs.getString("password").equals(Password.hashFull(password, pass))) {
 				if(count == 0) {
 					save = rs.getString("role");
 					this.universalfirstName = rs.getString("firstName");
@@ -142,7 +145,7 @@ class DatabaseHelper {
 
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
 			pstmt.setString(1, email);
-			pstmt.setString(2, hashPassword.hash(password + pass));
+			pstmt.setString(2, Password.hash(password + pass));
 			pstmt.setString(3, save);
 			try (ResultSet RS = pstmt.executeQuery()) {
 				return save;
@@ -159,6 +162,52 @@ class DatabaseHelper {
 	}
 	public String getpreferredName() {
 		return this.universalpreferredName;
+	}
+	
+	/**
+	 * Checks if an invite code is valid or not
+	 * @param invite
+	 * @throws SQLException
+	 */
+	public boolean validateInviteCode(String invite) {
+		try {
+			String sql = "SELECT * FROM invite"; 
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(sql); 
+	
+			while(rs.next()){
+				if(rs.getString("invite").equals(invite)) {
+					return true;
+				}
+			}
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	/**
+	 * Returns the role of a given invite code
+	 * @param invite
+	 * @throws SQLException
+	 */
+	public String getInviteCodeRole(String invite) {
+		try {
+			String sql = "SELECT * FROM invite"; 
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(sql); 
+	
+			while(rs.next()){
+				if(rs.getString("invite").equals(invite)) {
+					return rs.getString("role");
+				}
+			}
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return "";
 	}
 	
 	//new invite functions
@@ -191,7 +240,7 @@ class DatabaseHelper {
 		}
 	}
 	
-	public void finishRegistration(String email) throws SQLException{
+	public void finishRegistration(String email) throws SQLException {
 		Scanner scanner = new Scanner(System.in);
 		
 		System.out.println("Insert first name: ");

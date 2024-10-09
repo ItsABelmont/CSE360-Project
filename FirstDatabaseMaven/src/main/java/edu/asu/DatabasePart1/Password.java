@@ -2,6 +2,7 @@ package edu.asu.DatabasePart1;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Random;
 
 /**
  * <p> Password Class </p>
@@ -70,4 +71,22 @@ public class Password {
 	private static int byteToHexLow(byte oneByte) {
 		return oneByte & 15;
 	}
+	
+	/**
+	 * Creates a random string of a specified length
+	 * @param length
+	 * @return
+	 */
+	public static String generateRandomString(int length) {
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        Random random = new Random();
+        StringBuilder sb = new StringBuilder(length);
+        
+        for (int i = 0; i < length; i++) {
+            int index = random.nextInt(characters.length());
+            sb.append(characters.charAt(index));
+        }
+
+        return sb.toString();
+    }
 }
