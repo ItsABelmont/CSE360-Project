@@ -15,7 +15,7 @@ public class StartCSE360 {
 
 	public static void main( String[] args )
 	{
-		//GUI.main(args);
+		GUI.main(args);
 		
 		try { 
 			

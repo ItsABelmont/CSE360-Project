@@ -2,6 +2,7 @@ package edu.asu.DatabasePart1;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
@@ -12,13 +13,16 @@ public class GUI extends Application {
 	}
 	@Override
 	public void start(Stage theStage) throws Exception {
-theStage.setTitle("Lynn Robert Carter");			// Label the stage (a window)
+		theStage.setTitle("CSE360 Application");
 		
-		Pane theRoot = new Pane();
+		Pane root = new Pane();
 		
-		Scene theScene = new Scene(theRoot, 500, 500);	// Create the scene
+		Label text = new Label("sample text");
+		root.getChildren().add(text);
 		
-		theStage.setScene(theScene);						// Set the scene on the stage
+		Scene scene = new Scene(root, 500, 500);
+		
+		theStage.setScene(scene);
 		
 		theStage.show();
 	}
