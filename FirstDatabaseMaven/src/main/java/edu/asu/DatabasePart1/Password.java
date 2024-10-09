@@ -5,14 +5,10 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Random;
 
 /**
- * <p> Password Class </p>
+ * This static class provides methods to hash a password
  * 
- * <p> Description: This static class provides methods to hash a password </p>
- * 
- * @author	Just Wise
+ * @author Just Wise
  *
- * @version 1.00	2024-10-08 (some description)
- * 
  */
 public class Password {
 	/**
@@ -72,21 +68,20 @@ public class Password {
 		return oneByte & 15;
 	}
 	
-	/**
-	 * Creates a random string of a specified length
-	 * @param length
-	 * @return
-	 */
 	public static String generateRandomString(int length) {
-        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
         Random random = new Random();
-        String sb = "";
-        
+        StringBuilder sb = new StringBuilder(length);
+
         for (int i = 0; i < length; i++) {
             int index = random.nextInt(characters.length());
-            sb += characters.charAt(index);
+            sb.append(characters.charAt(index));
         }
 
-        return sb;
+        return sb.toString();
     }
 }
+
+
+
+
