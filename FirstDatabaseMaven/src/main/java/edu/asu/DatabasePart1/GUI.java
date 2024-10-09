@@ -49,9 +49,10 @@ public class GUI extends Application {
 		appStage.setTitle("Help System");
 		
 		try {
+			//If the database is empty, start in the account creation page
 			if (databaseHelper.isDatabaseEmpty()) {
 				setCreateNewAccountPage();
-			} else {
+			} else {//Otherwise start in the login page
 				setLoginPage();
 			}
 		}
@@ -60,17 +61,24 @@ public class GUI extends Application {
 		}
 	}
 	
+	/**
+	 * This method sets up the login page
+	 */
 	public static void setLoginPage() {
 		Pane root = new Pane();
 		
+		//The big title of the page
 		Label title = createLabel("Help System Login", 50, 512, Pos.CENTER, 0, 0);
 		
+		//Text and an input field for the email
 		Label emailTitle = createLabel("Email:", 15, 512, Pos.CENTER, 0, 70);
 		TextField emailInput = createTextField("", 15, 256, Pos.CENTER, 128, 90);
 		
+		//Text and an input field for the password
 		Label passwordTitle = createLabel("Password:", 15, 512, Pos.CENTER, 0, 120);
 		TextField passwordInput = createPasswordField(15, 256, Pos.CENTER, 128, 140);
 		
+		//Add all of the elements to the page
 		root.getChildren().addAll(title, emailTitle, emailInput, passwordTitle, passwordInput);
 		
 		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -80,42 +88,56 @@ public class GUI extends Application {
 		appStage.show();
 	}
 	
+	/**
+	 * This method sets up the account creation page
+	 */
 	public static void setCreateNewAccountPage() {
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 270);
+		errorMessage.setTextFill(Color.RED);
+		
+		boolean testEmpty = true;
+		try {
+			testEmpty = databaseHelper.isDatabaseEmpty();
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
+		final boolean emptyDatabase = testEmpty;
+		
 		Pane root = new Pane();
 		
 		Label title = createLabel("Create Account", 50, 512, Pos.CENTER, 0, 0);
 		
-		Label emailTitle = createLabel("Email:", 15, 512, Pos.CENTER, 0, 70);
-		TextField emailInput = createTextField("", 15, 256, Pos.CENTER, 128, 90);
+		Label codeTitle = createLabel("Invite Code:", 15, 512, Pos.CENTER, 0, 70);
+		TextField codeInput = createTextField("", 15, 256, Pos.CENTER, 128, 90);
 		
-		Label passwordTitle = createLabel("Password:", 15, 512, Pos.CENTER, 0, 120);
-		TextField passwordInput = createPasswordField(15, 256, Pos.CENTER, 128, 140);
+		Label emailTitle = createLabel("Email:", 15, 512, Pos.CENTER, 0, 120);
+		TextField emailInput = createTextField("", 15, 256, Pos.CENTER, 128, 140);
 		
-		Label confirmPasswordTitle = createLabel("Confirm Password:", 15, 512, Pos.CENTER, 0, 170);
-		TextField confirmPasswordInput = createPasswordField(15, 256, Pos.CENTER, 128, 190);
+		Label passwordTitle = createLabel("Password:", 15, 512, Pos.CENTER, 0, 170);
+		TextField passwordInput = createPasswordField(15, 256, Pos.CENTER, 128, 190);
 		
-		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 220);
-		errorMessage.setTextFill(Color.RED);
+		Label confirmPasswordTitle = createLabel("Confirm Password:", 15, 512, Pos.CENTER, 0, 220);
+		TextField confirmPasswordInput = createPasswordField(15, 256, Pos.CENTER, 128, 240);
 		
 		Button createButton = createButton(
 				(event) -> {
 					if (passwordInput.getText().equals(confirmPasswordInput.getText())) {
-						try {
-							if (databaseHelper.isDatabaseEmpty()) {
-								createFirstAdmin(emailInput.getText(), passwordInput.getText());
-							} else {
-								createAccount(emailInput.getText(), passwordInput.getText());
-							}
-						}
-						catch (SQLException e) {
-							e.printStackTrace();
+						if (emptyDatabase) {
+							createFirstAdmin(emailInput.getText(), passwordInput.getText());
+						} else {
+							boolean validCode = true;//true for now but ONLY UNTIL THE METHOD EXISTS
+							//validCode = databaseHelper.inviteCode(codeInput.getText());
+							createAccount(emailInput.getText(), passwordInput.getText());
 						}
 					} else {
 						failCreatePassword(errorMessage, "Passwords do NOT match!");
 					}
 				},
-			"Continue", 15, 64, Pos.CENTER, 218, 240);
+			"Continue", 15, 64, Pos.CENTER, 218, 290);
 		
+		if (emptyDatabase)
+			root.getChildren().addAll(codeTitle, codeInput);
 		root.getChildren().addAll(title, emailTitle, emailInput, passwordTitle,
 				passwordInput, confirmPasswordTitle, confirmPasswordInput,
 				createButton, errorMessage);
