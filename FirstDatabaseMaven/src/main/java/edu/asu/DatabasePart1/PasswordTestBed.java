@@ -12,8 +12,8 @@ package edu.asu.DatabasePart1;
  */
 
 public class PasswordTestBed {
-    static int numPassed = 0; // Number of passed test cases
-    static int numFailed = 0; // Number of failed test cases
+    static int numPassed = 0;	// Number of passed test cases
+    static int numFailed = 0;	// Number of failed test cases
 
     public static void main(String[] args) {
         // Print header for testing
