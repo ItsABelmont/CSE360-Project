@@ -19,6 +19,7 @@ public class StartCSE360 {
 
 	public static void main( String[] args )
 	{
+		
 		try {
 			databaseHelper.connectToDatabase();
 		}

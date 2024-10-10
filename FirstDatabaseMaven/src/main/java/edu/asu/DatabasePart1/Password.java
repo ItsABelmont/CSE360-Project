@@ -68,8 +68,13 @@ public class Password {
 		return oneByte & 15;
 	}
 	
+	/**
+	 * Generates a random string of a given length
+	 * @param length
+	 * @return
+	 */
 	public static String generateRandomString(int length) {
-        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         Random random = new Random();
         StringBuilder sb = new StringBuilder(length);
 

@@ -103,7 +103,11 @@ public class GUI extends Application {
 					String[] roles = databaseHelper.login(emailInput.getText(), passwordInput.getText());
 					if (roles.length > 0) {
 						currentEmail = emailInput.getText();
-						setLoggingInPage(roles);
+						if (databaseHelper.shouldUserReset(currentEmail)) {
+							setSetupAccountPage();
+						}
+						else
+							setLoggingInPage(roles);
 					} else {//If there are no roles, the login failed and there was no login with those credentials
 						failCreateAccount(errorMessage, "Invalid email or password");
 					}
@@ -332,7 +336,7 @@ public class GUI extends Application {
 			Label user = createLabel(preferred + " (" + first + " " + middle + " " + last + ")\n" + email, 13, 256, Pos.TOP_LEFT, 30, id * 30 + 50);
 			Button userButton = createButton(
 					(event) -> {
-						//setEditUserPage(email);
+						setEditUserPage(email, preferred);
 					},
 				"Edit", 15, 64, Pos.CENTER, 338, id * 30 + 50);
 			if (!email.equals(currentEmail)) {
@@ -376,6 +380,71 @@ public class GUI extends Application {
 				e.printStackTrace();
 			}
 		});
+	}
+	
+	/**
+	 * Allows you to edit the roles of a user
+	 */
+	public static void setEditUserPage(String email, String preferredName) {
+		Pane root = new Pane();
+		
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 270);
+		errorMessage.setTextFill(Color.RED);
+		
+		//The big title of the page
+		Label title = createLabel("Edit user: " + preferredName, 30, 512, Pos.CENTER, 0, 0);
+		
+		CheckBox adminRole = createCheckBox("Admin", 15, 96, Pos.CENTER, 202, 90);
+		
+		CheckBox instructorRole = createCheckBox("Instructor", 15, 96, Pos.CENTER, 202, 130);
+		
+		CheckBox studentRole = createCheckBox("Student", 15, 96, Pos.CENTER, 202, 170);
+		
+		Button generateButton = createButton(
+				(event) -> {
+					int numRoles = 0;
+					if (adminRole.isSelected())
+						numRoles++;
+					if (instructorRole.isSelected())
+						numRoles++;
+					if (studentRole.isSelected())
+						numRoles++;
+					String[] roles = new String[numRoles];
+					numRoles = 0;
+					if (adminRole.isSelected()) {
+						roles[numRoles] = "admin";
+						numRoles++;
+					}
+					if (instructorRole.isSelected()) {
+						roles[numRoles] = "instructor";
+						numRoles++;
+					}
+					if (studentRole.isSelected()) {
+						roles[numRoles] = "student";
+						numRoles++;
+					}
+					if (roles.length > 0)
+						databaseHelper.setUserRoles(email, roles);
+					else
+						errorMessage.setText("Must have role to generate invite code!");
+				},
+			"Update", 15, 96, Pos.CENTER, 202, 200);
+		
+		Button backButton = createButton(
+				(event) -> {
+					setAdminPage();
+				},
+			"Back", 15, 96, Pos.CENTER, 202, 350);
+		
+		//Add all of the elements to the page
+		root.getChildren().addAll(title, adminRole, instructorRole, studentRole,
+				backButton, generateButton, errorMessage);
+		
+		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
+		
+		appStage.setScene(scene);
+		
+		appStage.show();
 	}
 	
 	/**
@@ -543,18 +612,34 @@ public class GUI extends Application {
 		Label preferredTitle = createLabel("Preferred Name:", 15, 128, Pos.CENTER, 128, 160);
 		TextField preferredInput = createTextField("", 15, 128, Pos.CENTER, 256, 160);
 		
-		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 220);
+		Label passwordTitle = createLabel("Password:", 15, 128, Pos.CENTER, 128, 190);
+		TextField passwordInput = createTextField("", 15, 128, Pos.CENTER, 256, 190);
+		
+		Label password2Title = createLabel("Confirm Password:", 15, 128, Pos.CENTER, 128, 220);
+		TextField password2Input = createTextField("", 15, 128, Pos.CENTER, 256, 220);
+		
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 250);
 		errorMessage.setTextFill(Color.RED);
 		
 		Button continueButton = createButton(
 				(event) -> {
+					if (databaseHelper.shouldUserReset(currentEmail)) {
+						if (passwordInput.getText().equals(password2Input.getText()))
+							databaseHelper.setPassword(currentEmail, passwordInput.getText());
+						else
+							failCreateAccount(errorMessage, "Passwords do NOT match!");
+							return;
+					}
 					setupInformation(firstInput.getText(), middleInput.getText(), lastInput.getText(), preferredInput.getText());
 				},
-			"Continue", 15, 64, Pos.CENTER, 218, 240);
+			"Continue", 15, 64, Pos.CENTER, 218, 270);
 		
 		root.getChildren().addAll(title, firstTitle, firstInput, middleTitle,
 				middleInput, lastTitle, lastInput, preferredTitle, preferredInput,
 				continueButton, errorMessage);
+		
+		if (databaseHelper.shouldUserReset(currentEmail))
+			root.getChildren().addAll(passwordTitle, passwordInput, password2Title, password2Input);
 		
 		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
 		
