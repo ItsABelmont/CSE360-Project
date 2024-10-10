@@ -182,7 +182,7 @@ class DatabaseHelper {
 			
 			while(rs.next()) {
 				//big if determines if user is in and gives their role
-				if(rs.getString("email").equals(email) && rs.getString("password").equals(Password.hashFull(password,  rs.getString("random")))) {
+				if(rs.getString("email").equals(email) && rs.getString("password").equals(Password.hashFull(password, rs.getString("random")))) {
 					this.universalpreferredName = rs.getString("preferredName"); 
 					this.universalfirstName = rs.getString("firstName");
 					return Roles.stringToArray(rs.getString("role"));

@@ -269,7 +269,10 @@ public class GUI extends Application {
 						roles[numRoles] = "student";
 						numRoles++;
 					}
-					generateInviteCode(roles, outputCode);
+					if (roles.length > 0)
+						generateInviteCode(roles, outputCode);
+					else
+						errorMessage.setText("Must have role to generate invite code!");
 				},
 			"Generate", 15, 96, Pos.CENTER, 202, 200);
 		
@@ -277,7 +280,7 @@ public class GUI extends Application {
 				(event) -> {
 					setAdminPage();
 				},
-			"Back", 15, 96, Pos.CENTER, 202, 490);
+			"Back", 15, 96, Pos.CENTER, 202, 350);
 		
 		//Add all of the elements to the page
 		root.getChildren().addAll(title, adminRole, instructorRole, studentRole,
@@ -385,6 +388,9 @@ public class GUI extends Application {
 		Label confirmPasswordTitle = createLabel("Confirm Password:", 15, 512, Pos.CENTER, 0, 170);
 		TextField confirmPasswordInput = createPasswordField(15, 256, Pos.CENTER, 128, 190);
 		
+		Label tempPasswordTitle = createLabel("Temporary Password:", 15, 512, Pos.CENTER, 0, 140);
+		TextField tempPassword = createText("", 15, 64, Pos.CENTER, 218, 160);
+		
 		Button createButton = createButton(
 				(event) -> {
 					if (passwordInput.getText().equals(confirmPasswordInput.getText())) {
@@ -393,9 +399,12 @@ public class GUI extends Application {
 						} else {
 							String inviteCode = codeInput.getText();
 							boolean validCode = databaseHelper.validateInviteCode(inviteCode);
-							if (validCode)
-								createAccount(emailInput.getText(), passwordInput.getText(), databaseHelper.getInviteCodeRoles(inviteCode));
-							else
+							String tempPass = Password.generateRandomString(12);
+							if (validCode) {
+								createAccount("", tempPass, databaseHelper.getInviteCodeRoles(inviteCode));
+								tempPassword.setText(tempPass);
+								
+							} else
 								failCreateAccount(errorMessage, "Invite code is INVALID!");
 						}
 					} else {
@@ -411,7 +420,7 @@ public class GUI extends Application {
 			"Back to Login", 13, 128, Pos.CENTER, 194, 290);
 		
 		if (!emptyDatabase)
-			root.getChildren().addAll(codeTitle, codeInput, backButton);
+			root.getChildren().addAll(codeTitle, codeInput, tempPasswordTitle, tempPassword, backButton);
 		else
 			root.getChildren().addAll(emailTitle, emailInput, passwordTitle,
 					passwordInput, confirmPasswordTitle, confirmPasswordInput);
@@ -432,7 +441,6 @@ public class GUI extends Application {
 	
 	private static void createAccount(String email, String password, String[] roles) {
 		databaseHelper.register(email, password, roles);
-		setSetupAccountPage();
 	}
 	
 	private static void failCreateAccount(Label errorText, String message) {
