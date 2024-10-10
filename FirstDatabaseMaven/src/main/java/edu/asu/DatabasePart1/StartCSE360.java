@@ -8,6 +8,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
+/**
+ * 
+ */
 public class StartCSE360 {
 
 	private static final DatabaseHelper databaseHelper = new DatabaseHelper();
