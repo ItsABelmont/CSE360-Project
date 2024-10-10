@@ -6,9 +6,9 @@ import java.util.Scanner;
 /**
  * </p> DatabaseHelper </p>
  * 
- * Description: 
+ * Description: This class handles the database of the project. 
  * 
- * authors Lynn Robert Carter - Blake Thilbin - Just Wise
+ * authors Lynn Robert Carter - Blake Thilbin - Just Wise - Reem Helal
  * 
  * 
  */
@@ -190,7 +190,7 @@ class DatabaseHelper {
 		
 	}
 	
-	//new invite funcitons
+	//New invite functions
 	public void addInviteUser(String invite, String role) throws SQLException{
 		String insertUser = "INSERT INTO invite (invite, role) VALUES (?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)){

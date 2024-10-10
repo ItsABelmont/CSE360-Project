@@ -5,10 +5,13 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Random;
 
 /**
- * This static class provides methods to hash a password
+ * <p> Password Class </p>
+ * 
+ * <p> Description: This static class provides methods to hash a password </p>
  * 
  * @author Just Wise
  *
+ * @version 1.00	2024-10-09	Implementation of password hashing 
  */
 public class Password {
 	/**

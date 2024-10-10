@@ -1,5 +1,14 @@
 package edu.asu.DatabasePart1;
 
+/**
+ * <p> Roles Class </p>
+ * 
+ * <p> Description: </p>
+ * 
+ * @author 
+ * 
+ * @version 1.00 
+ */
 public class Roles {
 	/**
 	 * Takes an input of the form "admin,instructor,student" and returns a String[]
