@@ -287,16 +287,18 @@ class DatabaseHelper {
 		}
 	}
 	
-	public void finishRegistration(String email, String first, String middle, String last, String preferred) throws SQLException{
+	public void finishRegistration(String email, String first, String middle, String last, String preferred) {
 		
 		String sql = "UPDATE cse360users SET preferredName = ? WHERE email = ?";
-		
+		System.out.println(email + " " + preferred);
 		try(PreparedStatement statement = connection.prepareStatement(sql)){
 			statement.setString(1, preferred);
 			statement.setString(2, email);
 			int rowAffected = statement.executeUpdate();
 			this.universalpreferredName = preferred;
 
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 		//to get middle and last just keeping repeating this code over and over
 		sql = "UPDATE cse360users SET firstName = ? WHERE email = ?";
@@ -308,6 +310,8 @@ class DatabaseHelper {
 			int rowAffected = statement.executeUpdate();
 			this.universalfirstName = first;
 
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 		
 		sql = "UPDATE cse360users SET middleName = ? WHERE email = ?";
@@ -316,6 +320,8 @@ class DatabaseHelper {
 			statement.setString(1, middle);
 			statement.setString(2, email);
 			int rowAffected = statement.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 		
 		sql = "UPDATE cse360users SET lastName = ? WHERE email = ?";
@@ -324,6 +330,8 @@ class DatabaseHelper {
 			statement.setString(1, last);
 			statement.setString(2, email);
 			int rowAffected = statement.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 		
 		
@@ -364,7 +372,21 @@ class DatabaseHelper {
 		
 	}
 	
-	public void addUserRole(String email, String role) throws SQLException{
+	public PreparedStatement deleteUser(String email) {
+		String sql = "DELETE FROM cse360users WHERE email=?";
+
+		PreparedStatement statement = null;
+		try {
+			statement = connection.prepareStatement(sql);
+			statement.setString(1, email);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return statement;
+	}
+	
+	public void addUserRole(String email, String role) throws SQLException {
 		String sql = "SELECT * FROM cse360users"; 
 		Statement stmt = connection.createStatement();
 		ResultSet rs = stmt.executeQuery(sql);
@@ -420,6 +442,41 @@ class DatabaseHelper {
 			statement.executeUpdate();
 		}
 		
+	}
+	
+	//This is used for the lambda in forEachUser
+	public interface UserMethod {
+		void doThing(int id, String email, String[] roles, String first, String middle, String last, String preferred);
+	}
+	/**
+	 * This method performs a given action looping through every user
+	 * @param method
+	 */
+	public void forEachUser(UserMethod method) {
+		String sql = "SELECT * FROM cse360users";
+		
+		try {
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(sql); 
+	
+			while(rs.next()) {
+				// Retrieve by column name 
+				int id  = rs.getInt("id");
+				String  email = rs.getString("email");
+				if (email.equals(""))
+					continue;
+				//String password = rs.getString("password");
+				String role = rs.getString("role");
+				String first = rs.getString("firstName");
+				String middle = rs.getString("middleName");
+				String last = rs.getString("lastName");
+				String preferred = rs.getString("preferredName");
+				method.doThing(id, email, Roles.stringToArray(role), first, middle, last, preferred);
+			}
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public void displayUsersByAdmin() throws SQLException{

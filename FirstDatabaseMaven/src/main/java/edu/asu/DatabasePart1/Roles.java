@@ -7,6 +7,8 @@ public class Roles {
 	 * @return
 	 */
 	public static String[] stringToArray(String input) {
+		if (input.length() == 0)
+			return new String[0];
 		return input.split(",");
 	}
 	
