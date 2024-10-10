@@ -58,8 +58,14 @@ public class StartCSE360 {
 					System.out.print("Enter Password: ");
 					String password2 = scanner.nextLine();
 					password = password2;
-					
-					userRole = databaseHelper.login(email, password);
+					String newPass = databaseHelper.doesUserReset(email2, password2);
+					System.out.println(newPass);
+					if(!newPass.equals("")) {
+						databaseHelper.displayUsersByAdmin();
+						userRole = databaseHelper.login(email, newPass);
+					}
+					else
+						userRole = databaseHelper.login(email, password);
 					
 					//if a user has no roles than they do not exist and can not login
 					if (userRole.equals(""))
@@ -297,7 +303,7 @@ public class StartCSE360 {
 		}
 		
 		while(true) {
-		System.out.println("1. Print Users\n2. Delete User\n3. Add user role\n4. Remove user role\n5. Generate Invite Code\n6. Logout");
+		System.out.println("1. Print Users\n2. Delete User\n3. Add user role\n4. Remove user role\n5. Generate Invite Code\n6. Reset User Account\n7. Logout");
 		String choice = scanner.nextLine();
 			if(choice.equals("1"))
 				databaseHelper.displayUsersByAdmin();
@@ -327,7 +333,14 @@ public class StartCSE360 {
 			}
 			else if(choice.equals("5"))
 				generateInviteCode();
-			else if(choice.equals("6"))
+			else if(choice.equals("6")) {
+				System.out.println("Choose a user to reset their password\n");
+				String email = scanner.nextLine();
+				String pass = Password.generateRandomString(8);
+				System.out.println(pass);
+				databaseHelper.passwordReset(email, pass);
+			}
+			else if(choice.equals("7"))
 				return;
 			else
 				System.out.println("Not valid choose a number");
