@@ -1,6 +1,15 @@
 package edu.asu.DatabasePart1;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+
+/**
+ * <p> DatabaseHelperTestBed Class </p>
+ * 
+ * <p> Description: A Java demonstration for checking if DatabaseHelper Class lambda methods work as expected </p>
+ * 
+ * @author Reem Helal
+ * 
+ * @version 1.00	2024-10-09  A set of semi-automated tests
+ * 
+ */
 
 public class DatabaseHelperTestBed {
 
@@ -20,7 +29,7 @@ public class DatabaseHelperTestBed {
             return dbHelper.getConnection() != null; // This will only be evaluated if the connection succeeds
         });
 
-        // Insert a user into the database 
+        // Insert a user into the database
         performTestCase(2, "Insert User", () -> {
             dbHelper.register("testuser@example.com", "password123", "student");
             return dbHelper.doesUserExist("testuser@example.com", "student");
@@ -30,28 +39,22 @@ public class DatabaseHelperTestBed {
         performTestCase(3, "Check User Existence", () -> {
             return dbHelper.doesUserExist("testuser@example.com", "student");
         });
-
+        
+        //Validates if the invite code allows a user to register and checks if the user is successfully added to the database.
         performTestCase(4, "Validate Invite Code", () -> {
             // Add the invite code and role to the invite table
             dbHelper.addInviteUser("inviteCode123", "student");
+            
+            // Call inviteCode, which will ask the user to input the username and password
+            dbHelper.inviteCode("inviteCode123");
 
-            // Simulate user input for username and password
-            String simulatedInput = "testuser@example.com\npassword123\n";
-            InputStream originalIn = System.in; // Save the original System.in
-
-            try {
-                System.setIn(new ByteArrayInputStream(simulatedInput.getBytes())); // Provide the simulated input
-
-                // Call inviteCode and process input
-                dbHelper.inviteCode("inviteCode123");
-                
-                // Check if the user was successfully registered
-                return dbHelper.doesUserExist("testuser@example.com", "student");
-
-            } finally {
-                System.setIn(originalIn); // Restore the original System.in
-            }
+            // Check if the user was successfully registered based on the provided username
+            System.out.println("Checking registration...");
+            
+            // Verify if the user was successfully registered with the given email and role.
+            return dbHelper.doesUserExist("testuser@example.com", "student");
         });
+
 
         // Delete a user from the database
         performTestCase(5, "Delete User", () -> {
@@ -91,8 +94,7 @@ public class DatabaseHelperTestBed {
         }
     }
 
-    // Functional interface for lambda test methods
-    @FunctionalInterface
+    /* Functional interface for lambda test methods*/
     interface TestMethod {
         boolean run() throws Exception;
     }
