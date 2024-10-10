@@ -17,9 +17,9 @@ class DatabaseHelper {
 	static final String USER = "sa"; 
 	static final String PASS = ""; 
 	
-	public static String universalfirstName = "";
-	public static String universalpreferredName = "";
-	public static String universalRole = "";
+	public String universalfirstName = "";
+	public String universalpreferredName = "";
+	public String universalRole = "";
 
 	
 	private Connection connection = null;
@@ -39,6 +39,7 @@ class DatabaseHelper {
 	}
 
 	private void createTables() throws SQLException {
+		//main user table
 		String userTable = "CREATE TABLE IF NOT EXISTS cse360users ("
 				+ "id INT AUTO_INCREMENT PRIMARY KEY, "
 				+ "email VARCHAR(255), "
@@ -50,17 +51,18 @@ class DatabaseHelper {
 				+ "role VARCHAR(255), "
 				+ "random VARCHAR(255), "
 				+ "userReset VARCHAR(255))";
-		statement.execute(userTable);
+		statement.execute(userTable); //initializes main table
 		String inviteTable = "CREATE TABLE IF NOT EXISTS invite ("
 				+ "invite VARCHAR(255), "
 				+ "role VARCHAR(255))";
-		statement.execute(inviteTable);
+		statement.execute(inviteTable); //initializes invite table
 		String expireTable = "CREATE TABLE IF NOT EXISTS expire ("
 				+ "email VARCHAR(255), "
 				+ "password VARCHAR(255), "
 				+ "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)";
-		statement.execute(expireTable);
+		statement.execute(expireTable); //initializes expire table
 		
+		//these function checks all temp passwords to see if they expire and to delete them in 30 days
 		ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 		Runnable task = () -> {
 		    try {
@@ -86,6 +88,7 @@ class DatabaseHelper {
 		return true;
 	}
 	
+	//registers users putting in placeholder values for users that need to finish registration
 	public void register(String email, String password, String role) throws SQLException {
 		String insertUser = "INSERT INTO cse360users (email, password, firstName, middleName, lastName, preferredName, role, random, userReset) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?)";
 		String random = hashPassword.generateRandomString(8);
@@ -102,7 +105,8 @@ class DatabaseHelper {
 			pstmt.executeUpdate();
 		}
 		insertUser = "INSERT INTO invite (invite, role) VALUES (?, ?)";
-
+		
+		//inserts role and password for the users
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)){
 			pstmt.setString(1, "invites");
 			pstmt.setString(2, "roles");
@@ -111,6 +115,7 @@ class DatabaseHelper {
 		}
 		insertUser = "INSERT INTO expire (email, password) VALUES(?,?)";
 		
+		//inserts expire user values equating to zero
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)){
 			pstmt.setString(1, "");
 			pstmt.setString(2, "");
@@ -119,10 +124,13 @@ class DatabaseHelper {
 		}
 	}
 	
+	
+	//this reset the user password with the temp one time password
 	public String resetPassword(String email)throws SQLException {
 		
 		Scanner scanner = new Scanner(System.in);
 		
+		//updates main user telling them that they do not need to reset anymore
 		String sql = "UPDATE cse360users SET userReset = ? WHERE email = ?";
 		
 		try(PreparedStatement statement = connection.prepareStatement(sql)){
@@ -138,6 +146,7 @@ class DatabaseHelper {
 		Statement stmt = connection.createStatement();
 		ResultSet rs = stmt.executeQuery(query); 
 		
+		//gets the random for string which is a security measure
 		String full = "";
 		while(rs.next()) {
 			if(rs.getString("email").equals(email)) {
@@ -145,6 +154,7 @@ class DatabaseHelper {
 			}
 		}
 		
+		//updates the base password with the password hash full from password class hash security
 		sql = "UPDATE cse360users SET password = ? WHERE email = ?";
 		
 		try(PreparedStatement statement = connection.prepareStatement(sql)){
@@ -153,12 +163,11 @@ class DatabaseHelper {
 			statement.executeUpdate();
 		}
 		
-		
-		
 		return pass;
 		
 	}
 	
+	//asks for temp password to see if it is a valid one based off of the email inserted
 	public String userReset(String email) throws SQLException{
 		Scanner scanner = new Scanner(System.in);
 		
@@ -169,6 +178,7 @@ class DatabaseHelper {
 		System.out.println("Looks like your account is trying to be reset go ahead\n"
 				+ "and insert the temp password you where given to reset your password!\n");
 		
+		//checks to see if it is valid and if so go to resetPassword function/method
 		while(rs.next()) {
 			if(rs.getString("email").equals(email)) {
 				String pass = scanner.nextLine();
@@ -191,6 +201,8 @@ class DatabaseHelper {
 		
 	}
 	
+	//sets up user so next they log on they must us the temp password to reset their own password
+	
 	public void passwordReset(String email, String password) throws SQLException{
 		String sql = "UPDATE cse360users SET userReset = ? WHERE email = ?";
 		//change main to t to show that it is being reset
@@ -211,6 +223,7 @@ class DatabaseHelper {
 
 	}
 	
+	//check to see if user must reset before they log on
 	public String doesUserReset(String email, String password) throws SQLException{
 		String query = "SELECT * FROM cse360users";
 		Statement stmt = connection.createStatement();
@@ -218,6 +231,7 @@ class DatabaseHelper {
 		
 		String newPassword = "";	
 		
+		//check if they must reset based off of the user reset value being t or true for example
 		while(rs.next()) {
 			if(rs.getString("userReset").equals("t") && rs.getString("email").equals(email) && rs.getString("password").equals(Password.hashFull(password,  rs.getString("random")))) {
 				return newPassword = userReset(email);
@@ -228,6 +242,7 @@ class DatabaseHelper {
 		
 	}
 	
+	//main login function checks to see if user is logged in then to see if the credentials are valid or not
 	public String login(String email, String password) throws SQLException {
 		String query = "SELECT * FROM cse360users";
 		Statement stmt = connection.createStatement();
@@ -243,12 +258,9 @@ class DatabaseHelper {
 		
 		rs = stmt.executeQuery(query); 
 		
+		//checks to see if user exists
 		while(rs.next()) {
-			//big if determines if user is in and gives their role
-			System.out.println("OUt");
 			if(rs.getString("email").equals(email) && rs.getString("password").equals(Password.hashFull(password,  rs.getString("random")))) {
-				System.out.println("in");
-
 				this.universalpreferredName = rs.getString("preferredName"); 
 				this.universalfirstName = rs.getString("firstName");
 				return rs.getString("role");
@@ -258,6 +270,7 @@ class DatabaseHelper {
 		return "";
 	}
 	
+	//just getters and stuff
 	public String getFirstName() {
 		return this.universalfirstName;
 	}
@@ -268,26 +281,29 @@ class DatabaseHelper {
 		return this.universalpreferredName;
 	}
 	
-	//new invite functions
+	//new invite checks invite code
 	public void inviteCode(String invite) throws SQLException{
+		
 		String sql = "SELECT * FROM invite"; 
 		Statement stmt = connection.createStatement();
 		ResultSet rs = stmt.executeQuery(sql); 
 		Scanner scanner = new Scanner(System.in);
-
+		
+		//checks all invite code to see the on that matches
 		while(rs.next()){
 			if(rs.getString("invite").equals(invite)) {
-				System.out.println("Huzzah! It works give a unsername and password\nUsername: ");
+				System.out.println("Give a username and password\nUsername: ");
 				String email = scanner.nextLine();
 				System.out.println("Password: ");
 				String password = scanner.nextLine();
-				//Delete the line
 				
+				//Delete the line get rid of temp password	
 				sql = "DELETE FROM invite WHERE password=?";
 				PreparedStatement statement = connection.prepareStatement(sql);
 				statement.setString(1, invite);
 				statement.executeUpdate();
-					
+				
+				//finally registers them in the system
 				register(email, password, rs.getString("role"));
 				break;
 			}
@@ -295,7 +311,7 @@ class DatabaseHelper {
 		
 	}
 	
-	//new invite funcitons
+	//new invite functions add invite to the user 
 	public void addInviteUser(String invite, String role) throws SQLException{
 		String insertUser = "INSERT INTO invite (invite, role) VALUES (?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)){
@@ -305,8 +321,10 @@ class DatabaseHelper {
 		}
 	}
 	
+	//asks for all these in order to properly finish the registration
 	public void finishRegistration(String email, String first, String middle, String last, String preferred) throws SQLException{
 		
+		//gets the user preferred name
 		String sql = "UPDATE cse360users SET preferredName = ? WHERE email = ?";
 		
 		try(PreparedStatement statement = connection.prepareStatement(sql)){
@@ -316,7 +334,8 @@ class DatabaseHelper {
 			this.universalpreferredName = preferred;
 
 		}
-		//to get middle and last just keeping repeating this code over and over
+		
+		//updates first name
 		sql = "UPDATE cse360users SET firstName = ? WHERE email = ?";
 		this.universalfirstName = first;
 
@@ -328,6 +347,7 @@ class DatabaseHelper {
 
 		}
 		
+		//updates middle name
 		sql = "UPDATE cse360users SET middleName = ? WHERE email = ?";
 		
 		try(PreparedStatement statement = connection.prepareStatement(sql)){
@@ -336,6 +356,7 @@ class DatabaseHelper {
 			int rowAffected = statement.executeUpdate();
 		}
 		
+		//updates last name
 		sql = "UPDATE cse360users SET lastName = ? WHERE email = ?";
 		
 		try(PreparedStatement statement = connection.prepareStatement(sql)){
@@ -347,10 +368,10 @@ class DatabaseHelper {
 		
 	}
 	
+	//checks for user existence
 	public boolean doesUserExist(String email, String role) {
 	    String query = "SELECT COUNT(*) FROM cse360users WHERE email = ? AND role = ?";
 	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-	        
 	        pstmt.setString(1, email);
 	        pstmt.setString(2, role);
 	        ResultSet rs = pstmt.executeQuery();
@@ -365,16 +386,20 @@ class DatabaseHelper {
 	    return false; // If an error occurs, assume user doesn't exist
 	}
 	
+	//Deletes user
 	public void deleteUser() throws SQLException{
 		String sql = "DELETE FROM cse360users WHERE email=?";
 		Scanner scanner = new Scanner(System.in);
-
+		
+		//gets user to delete
 		PreparedStatement statement = connection.prepareStatement(sql);
 		System.out.println("Choose a user to delete");
 		String email = scanner.nextLine();
 		statement.setString(1, email);
 		
-		System.out.println("Are you sure that you want to do this?");
+		//clarifies user deletion
+		System.out.println("Are you sure that you want to do this?\n"
+				+ "insert \"Yes\" to do so");
 		String answer = scanner.nextLine();
 		if(answer.equals("Yes")) {
 			statement.executeUpdate();
@@ -382,6 +407,7 @@ class DatabaseHelper {
 		
 	}
 	
+	//add users
 	public void addUserRole(String email, String role) throws SQLException{
 		String sql = "SELECT * FROM cse360users"; 
 		Statement stmt = connection.createStatement();
@@ -389,6 +415,7 @@ class DatabaseHelper {
 		
 		String saved = "";
 		
+		//goes through searching through user based off of their email
 		while(rs.next()) {
 			if(rs.getString("email").equals(email)) {
 				saved = rs.getString("role");
@@ -400,6 +427,7 @@ class DatabaseHelper {
 			return;
 		}
 		
+		//updates user roles which is a full string
 		sql = "UPDATE cse360users SET role = ? WHERE email = ?";
 		
 		try(PreparedStatement statement = connection.prepareStatement(sql)){
@@ -410,6 +438,8 @@ class DatabaseHelper {
 		
 	}
 	
+	
+	//removes users role by updating thier role
 	public void removeUserRole(String email, String role) throws SQLException{		
 		String sql = "SELECT * FROM cse360users"; 
 		Statement stmt = connection.createStatement();
@@ -417,12 +447,13 @@ class DatabaseHelper {
 		
 		String saved = "";
 		
+		//checks to see if email is valid
 		while(rs.next()) {
 			if(rs.getString("email").equals(email)) {
 				saved = rs.getString("role");
-				System.out.print("Hello " + saved);
 			}
 		}
+		//checks if user even has roles if not they do not exist
 		if(saved.equals("")) {
 			System.out.println("User does not exist!");
 			return;
@@ -430,6 +461,7 @@ class DatabaseHelper {
 		
 		saved = saved.replace(role, "");
 		
+		//updates and changes the role
 		sql = "UPDATE cse360users SET role = ? WHERE email = ?";
 		
 		try(PreparedStatement statement = connection.prepareStatement(sql)){
@@ -440,6 +472,7 @@ class DatabaseHelper {
 		
 	}
 	
+	//Prints out user info
 	public void displayUsersByAdmin() throws SQLException{
 		String sql = "SELECT * FROM cse360users"; 
 		Statement stmt = connection.createStatement();
@@ -469,48 +502,6 @@ class DatabaseHelper {
 
 		} 
 	}
-	
-	public void displayUsersByInstructor() throws SQLException{		//enhancement
-		String sql = "SELECT * FROM cse360users"; 
-		Statement stmt = connection.createStatement();
-		ResultSet rs = stmt.executeQuery(sql); 
-
-		while(rs.next()) { 
-			// Retrieve by column name 
-			int id  = rs.getInt("id"); 
-			String  email = rs.getString("email"); 
-			String password = rs.getString("password"); 
-			String role = rs.getString("role");  
-
-			// Display values 
-			System.out.print("ID: " + id); 
-			System.out.print(", Age: " + email); 
-			System.out.print(", First: " + password); 
-			System.out.println(", Last: " + role); 
-		} 
-	}
-	
-	public void displayUsersByStudent() throws SQLException{		// enhancement
-		String sql = "SELECT * FROM cse360users"; 
-		Statement stmt = connection.createStatement();
-		ResultSet rs = stmt.executeQuery(sql); 
-
-		while(rs.next()) { 
-			// Retrieve by column name 
-			int id  = rs.getInt("id"); 
-			String  email = rs.getString("email"); 
-			String password = rs.getString("password"); 
-			String role = rs.getString("role");  
-
-			// Display values 
-			System.out.print("ID: " + id); 
-			System.out.print(", Age: " + email); 
-			System.out.print(", First: " + password); 
-			System.out.println(", Last: " + role); 
-		} 
-	}
-	
-	
 	
 	public Connection getConnection() {
 	    return connection;
