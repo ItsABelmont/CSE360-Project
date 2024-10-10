@@ -6,8 +6,9 @@ import java.util.Scanner;
 class DatabaseHelper {
 
 	// JDBC driver name and database URL 
-	static final String JDBC_DRIVER = "org.h2.Driver";
-	static final String DB_URL = "jdbc:h2:~/firstDatabase";
+	static final String JDBC_DRIVER = "org.h2.Driver";   
+	static final String DB_URL = "jdbc:h2:~/firstDatabase";  
+	private static final Password hashPassword = new Password();
 
 	//  Database credentials 
 	static final String USER = "sa"; 
@@ -43,7 +44,7 @@ class DatabaseHelper {
 				+ "middleName VARCHAR(255), "
 				+ "lastName VARCHAR(255), "
 				+ "preferredName VARCHAR(255), "
-				+ "role VARCHAR(20), "
+				+ "role VARCHAR(255), "
 				+ "random VARCHAR(255))";
 		statement.execute(userTable);
 		String inviteTable = "CREATE TABLE IF NOT EXISTS invite ("
@@ -64,12 +65,12 @@ class DatabaseHelper {
 		return true;
 	}
 	
-	public void register(String email, String password, String role) {
+	public void register(String email, String password, String role) throws SQLException {
 		String insertUser = "INSERT INTO cse360users (email, password, firstName, middleName, lastName, preferredName, role, random) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-		String random = Password.generateRandomString(8);
+		String random = hashPassword.generateRandomString(8);
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
 			pstmt.setString(1, email);
-			pstmt.setString(2, Password.hashFull(password, random));
+			pstmt.setString(2, hashPassword.hashFull(password, random));
 			pstmt.setString(3, "placeholder");
 			pstmt.setString(4, "placeholder");
 			pstmt.setString(5, "placeholder");
@@ -77,8 +78,6 @@ class DatabaseHelper {
 			pstmt.setString(7, role);
 			pstmt.setString(8, random);
 			pstmt.executeUpdate();
-		} catch (SQLException e) {
-			e.printStackTrace();
 		}
 		insertUser = "INSERT INTO invite (invite, role) VALUES (?, ?)";
 
@@ -87,97 +86,10 @@ class DatabaseHelper {
 			pstmt.setString(2, "roles");
 			pstmt.executeUpdate();
 
-		} catch (SQLException e) {
-			e.printStackTrace();
 		}
 	}
-	
-	/**
-	 * 
-	 * @param email
-	 * @param password
-	 * @return
-	 * @throws SQLException
-	 */
-	public String tryLogin(String email, String password) {
-		String query = "SELECT * FROM cse360users WHERE email = ? AND password = ? AND role = ?";
-		String sql = "SELECT * FROM cse360users"; 
-
-		//The main changes for random
-		String save = "";
-		String pass = "";
-		try {
-			Statement stmt;
-			stmt = connection.createStatement();
-			ResultSet rs = stmt.executeQuery(sql); 
-			
-			
-			while(rs.next()) {
-				if(rs.getString("email").equals(email)) {
-					pass = rs.getString("random");
-				}
-			}
-			//resets it if i introduce it again
-			rs = stmt.executeQuery(sql);
-			int count = 0;
-		
-			while(rs.next()) { 
-				if(rs.getString("email").equals(email) && rs.getString("firstName").equals("placeholder")) {
-					System.out.println("Finish Setting up your account");
-					finishRegistration(email);
-				}
-				if(rs.getString("email").equals(email) && rs.getString("password").equals(Password.hashFull(password, pass))) {
-					if(count == 0) {
-						save = rs.getString("role");
-						this.universalfirstName = rs.getString("firstName");
-						this.universalpreferredName = rs.getString("preferredName");
-					}
-					else {
-						System.out.println(rs.getString("role"));
-					}
-					this.universalfirstName = rs.getString("firstName");
-					this.universalpreferredName = rs.getString("preferredName");
-					count++;
-				}
-			} 
-			
-			
-			if(count > 1) {
-				System.out.println(save);
-				System.out.println("Looks like you have more than one role!\nWhich one would you like to login as?");
-				//save = scanner.nextLine();
-				this.universalRole = save;
-			}
-		} catch (SQLException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		
-		//System.out.println("HELLO, " + save);
-
-		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-			pstmt.setString(1, email);
-			pstmt.setString(2, Password.hash(password + pass));
-			pstmt.setString(3, save);
-			try (ResultSet RS = pstmt.executeQuery()) {
-				return save;
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		
-		return "";
-	}
-	
-	public String login(String email, String password) throws SQLException {
-		String query = "SELECT * FROM cse360users WHERE email = ? AND password = ? AND role = ?";
-		Scanner scanner = new Scanner(System.in);
-		String sql = "SELECT * FROM cse360users"; 
-		Statement stmt = connection.createStatement();
-		ResultSet rs = stmt.executeQuery(sql); 
-		
-		//The main changes for random
-		String save = "";
+	/*
+	 * String save = "";
 		String pass = "";
 		
 		while(rs.next()) {
@@ -194,7 +106,7 @@ class DatabaseHelper {
 				System.out.println("Finish Setting up your account");
 				finishRegistration(email);
 			}
-			if(rs.getString("email").equals(email) && rs.getString("password").equals(Password.hashFull(password, pass))) {
+			if(rs.getString("email").equals(email) && rs.getString("password").equals(hashPassword.hash(password + pass))) {
 				if(count == 0) {
 					save = rs.getString("role");
 					this.universalfirstName = rs.getString("firstName");
@@ -218,16 +130,25 @@ class DatabaseHelper {
 		}
 		
 		System.out.println("HELLO, " + save);
-
-		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-			pstmt.setString(1, email);
-			pstmt.setString(2, Password.hash(password + pass));
-			pstmt.setString(3, save);
-			try (ResultSet RS = pstmt.executeQuery()) {
-				return save;
+	 */
+	
+	public String login(String email, String role) throws SQLException {
+		String query = "SELECT * FROM cse360users";
+		Statement stmt = connection.createStatement();
+		ResultSet rs = stmt.executeQuery(query); 
+		
+		//The main changes for random
+		
+		while(rs.next()) {
+			//big if determines if user is in and gives their role
+			if(rs.getString("email").equals(email)) {
+				this.universalpreferredName = rs.getString("preferredName"); 
+				this.universalfirstName = rs.getString("firstName");
+				return rs.getString("role");
 			}
 		}
 		
+		return "";
 	}
 	
 	public String getFirstName() {
@@ -238,52 +159,6 @@ class DatabaseHelper {
 	}
 	public String getpreferredName() {
 		return this.universalpreferredName;
-	}
-	
-	/**
-	 * Checks if an invite code is valid or not
-	 * @param invite
-	 * @throws SQLException
-	 */
-	public boolean validateInviteCode(String invite) {
-		try {
-			String sql = "SELECT * FROM invite"; 
-			Statement stmt = connection.createStatement();
-			ResultSet rs = stmt.executeQuery(sql); 
-	
-			while(rs.next()){
-				if(rs.getString("invite").equals(invite)) {
-					return true;
-				}
-			}
-		}
-		catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return false;
-	}
-	
-	/**
-	 * Returns the role of a given invite code
-	 * @param invite
-	 * @throws SQLException
-	 */
-	public String getInviteCodeRole(String invite) {
-		try {
-			String sql = "SELECT * FROM invite"; 
-			Statement stmt = connection.createStatement();
-			ResultSet rs = stmt.executeQuery(sql); 
-	
-			while(rs.next()){
-				if(rs.getString("invite").equals(invite)) {
-					return rs.getString("role");
-				}
-			}
-		}
-		catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return "";
 	}
 	
 	//new invite functions
@@ -316,35 +191,19 @@ class DatabaseHelper {
 		}
 	}
 	
-	public void finishRegistration(String email) throws SQLException {
-		Scanner scanner = new Scanner(System.in);
+	public void finishRegistration(String email, String first, String middle, String last, String preferred) throws SQLException{
 		
-		System.out.println("Insert first name: ");
-		String first = scanner.nextLine();
-		System.out.println("Insert middle: ");
-		String middle = scanner.nextLine();
+		String sql = "UPDATE cse360users SET preferredName = ? WHERE email = ?";
 		
-		System.out.println("Insert last: ");
-		String last = scanner.nextLine();
-		
-		System.out.println("Do you have a preferred name? Y/N");
-		String yn = scanner.nextLine();
-		if(yn.equals("Y")) {
-			System.out.println("Insert prefered: ");
-			
-			String preferred = scanner.nextLine();	
-			String sql = "UPDATE cse360users SET preferredName = ? WHERE email = ?";
-			
-			try(PreparedStatement statement = connection.prepareStatement(sql)){
-				statement.setString(1, preferred);
-				statement.setString(2, email);
-				int rowAffected = statement.executeUpdate();
-				this.universalpreferredName = preferred;
+		try(PreparedStatement statement = connection.prepareStatement(sql)){
+			statement.setString(1, preferred);
+			statement.setString(2, email);
+			int rowAffected = statement.executeUpdate();
+			this.universalpreferredName = preferred;
 
-			}
 		}
 		//to get middle and last just keeping repeating this code over and over
-		String sql = "UPDATE cse360users SET firstName = ? WHERE email = ?";
+		sql = "UPDATE cse360users SET firstName = ? WHERE email = ?";
 		this.universalfirstName = first;
 
 		try(PreparedStatement statement = connection.prepareStatement(sql)){
@@ -409,61 +268,59 @@ class DatabaseHelper {
 		
 	}
 	
-	public void addUserRole() throws SQLException{
-		Scanner scanner = new Scanner(System.in);
+	public void addUserRole(String email, String role) throws SQLException{
 		String sql = "SELECT * FROM cse360users"; 
 		Statement stmt = connection.createStatement();
 		ResultSet rs = stmt.executeQuery(sql);
 		
-		System.out.println("Choose a user.");
-		String email = scanner.nextLine();
-		System.out.println("Choose a role to add.");
-		String role = scanner.nextLine();
-		
-		String password = "";
-		String first = "";
-		String middle = "";
-		String last = "";
-		String preferred = "";
+		String saved = "";
 		
 		while(rs.next()) {
 			if(rs.getString("email").equals(email)) {
-				password = rs.getString("password");
-				first = rs.getString("firstName");
-				middle = rs.getString("middleName");
-				last = rs.getString("lastName");
-				preferred = rs.getString("preferredName");
-
+				saved = rs.getString("role");
+				System.out.print("Hello " + saved);
 			}
 		}
-		
-		String insertUser = "INSERT INTO cse360users (email, password, firstName, middleName, lastName, preferredName, role) VALUES (?, ?, ?, ?, ?, ?, ?)";
-		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
-			pstmt.setString(1, email);
-			pstmt.setString(2, password);
-			pstmt.setString(3, first);
-			pstmt.setString(4, middle);
-			pstmt.setString(5, last);
-			pstmt.setString(6, preferred);
-			pstmt.setString(7, role);
-			pstmt.executeUpdate();
+		if(saved.equals("")) {
+			System.out.println("User does not exist!");
+			return;
 		}
+		
+		sql = "UPDATE cse360users SET role = ? WHERE email = ?";
+		
+		try(PreparedStatement statement = connection.prepareStatement(sql)){
+			statement.setString(1, saved + "," + role);
+			statement.setString(2, email);
+			statement.executeUpdate();
+		}
+		
 	}
 	
-	public void removeUserRole() throws SQLException{
-		String sql = "DELETE FROM cse360users WHERE email = ? AND role = ?";
-		Scanner scanner = new Scanner(System.in);
-		PreparedStatement statement = connection.prepareStatement(sql);
-		System.out.println("Choose a user.");
-		String email = scanner.nextLine();
-		System.out.println("Choose a role to delete.");
-		String role = scanner.nextLine();
+	public void removeUserRole(String email, String role) throws SQLException{		
+		String sql = "SELECT * FROM cse360users"; 
+		Statement stmt = connection.createStatement();
+		ResultSet rs = stmt.executeQuery(sql);
 		
-		System.out.println("Are you sure that you want to do this?");
-		String answer = scanner.nextLine();
-		if(answer.equals("Yes")) {
-			statement.setString(1, email);
-			statement.setString(2, role);
+		String saved = "";
+		
+		while(rs.next()) {
+			if(rs.getString("email").equals(email)) {
+				saved = rs.getString("role");
+				System.out.print("Hello " + saved);
+			}
+		}
+		if(saved.equals("")) {
+			System.out.println("User does not exist!");
+			return;
+		}
+		
+		saved = saved.replace(role, "");
+		
+		sql = "UPDATE cse360users SET role = ? WHERE email = ?";
+		
+		try(PreparedStatement statement = connection.prepareStatement(sql)){
+			statement.setString(1, saved);
+			statement.setString(2, email);
 			statement.executeUpdate();
 		}
 		
