@@ -137,6 +137,7 @@ public class GUI extends Application {
 	public static void setLoggingInPage(String[] roles) {
 		loginPreferredName = databaseHelper.getpreferredName();
 		
+		//If there is only one role, skip this page
 		if (roles.length == 1) {
 			if (roles[0].equals("admin")) {
 				setAdminPage();
@@ -160,24 +161,28 @@ public class GUI extends Application {
 		//The big title of the page
 		Label title = createLabel("Select a Role", 50, 512, Pos.CENTER, 0, 0);
 		
+		//Login as an admin
 		Button adminButton = createButton(
 				(event) -> {
 					setAdminPage();
 				},
 			"Admin", 15, 96, Pos.CENTER, 202, 70);
 		
+		//Login as an instructor
 		Button instructorButton = createButton(
 				(event) -> {
 					setInstructorPage();
 				},
 			"Instructor", 15, 96, Pos.CENTER, 202, 120);
 		
+		//Login as a student
 		Button studentButton = createButton(
 				(event) -> {
 					setStudentPage();
 				},
 			"Student", 15, 96, Pos.CENTER, 202, 170);
 		
+		//Go back to the login page
 		Button backButton = createButton(
 				(event) -> {
 					setLoginPage();
@@ -215,18 +220,21 @@ public class GUI extends Application {
 		//The big title of the page
 		Label title = createLabel("HELLO, " + loginPreferredName, 30, 512, Pos.CENTER, 0, 0);
 		
+		//Generate an invite code
 		Button generateCodeButton = createButton(
 				(event) -> {
 					setGenerateInviteCodePage();
 				},
 			"Generate Invite Code", 13, 158, Pos.CENTER, 180, 70);
 		
+		//Go to the list users page
 		Button listUsersButton = createButton(
 				(event) -> {
 					setListUsersPage();
 				},
 			"List Users", 13, 158, Pos.CENTER, 180, 120);
 		
+		//Logout button
 		Button logoutButton = createButton(
 				(event) -> {
 					setLoginPage();
@@ -243,6 +251,9 @@ public class GUI extends Application {
 		appStage.show();
 	}
 	
+	/**
+	 * Steup the page where you create invite codes as an admin
+	 */
 	public static void setGenerateInviteCodePage() {
 		Pane root = new Pane();
 		
@@ -262,6 +273,7 @@ public class GUI extends Application {
 		
 		Button generateButton = createButton(
 				(event) -> {
+					//Based on which boxes are checked, create the roles string array
 					int numRoles = 0;
 					if (adminRole.isSelected())
 						numRoles++;
@@ -283,6 +295,7 @@ public class GUI extends Application {
 						roles[numRoles] = "student";
 						numRoles++;
 					}
+					//If the code has roles, create an account, otherwise send an error
 					if (roles.length > 0)
 						generateInviteCode(roles, outputCode);
 					else
@@ -290,6 +303,7 @@ public class GUI extends Application {
 				},
 			"Generate", 15, 96, Pos.CENTER, 202, 200);
 		
+		//Go back to the admin page
 		Button backButton = createButton(
 				(event) -> {
 					setAdminPage();
@@ -307,6 +321,11 @@ public class GUI extends Application {
 		appStage.show();
 	}
 	
+	/**
+	 * This private method creates an invite code and displays it on a text field
+	 * @param roles
+	 * @param codeText
+	 */
 	private static void generateInviteCode(String[] roles, TextField codeText) {
 		String code = Password.generateRandomString(12);
 		databaseHelper.addInviteUser(code, roles);
@@ -314,6 +333,9 @@ public class GUI extends Application {
 		codeText.setText(code);
 	}
 	
+	/**
+	 * Sets up the page where every user in the system is displayed
+	 */
 	public static void setListUsersPage() {
 		Pane root = new Pane();
 		
@@ -332,14 +354,15 @@ public class GUI extends Application {
 		//The big title of the page
 		Label title = createLabel("Users:", 30, 512, Pos.CENTER, 0, 0);
 		
+		//Go through each user and create a label for the name and email, and give them buttons
 		databaseHelper.forEachUser((id, email, roles, first, middle, last, preferred) -> {
 			Label user = createLabel(preferred + " (" + first + " " + middle + " " + last + ")\n" + email, 13, 256, Pos.TOP_LEFT, 30, id * 30 + 50);
-			Button userButton = createButton(
+			Button userButton = createButton(//Edit button
 					(event) -> {
 						setEditUserPage(email, preferred);
 					},
 				"Edit", 15, 64, Pos.CENTER, 338, id * 30 + 50);
-			if (!email.equals(currentEmail)) {
+			if (!email.equals(currentEmail)) {//If the email is not the logged in user, it can be deleted
 				Button removeUserButton = createButton(
 						(event) -> {},
 					"Remove user", 15, 64, Pos.CENTER, 438, id * 30 + 50);
@@ -351,6 +374,7 @@ public class GUI extends Application {
 			root.getChildren().addAll(user, userButton);
 		});
 		
+		//Go back to the admin page with a button press
 		Button backButton = createButton(
 				(event) -> {
 					setAdminPage();
@@ -367,8 +391,19 @@ public class GUI extends Application {
 		appStage.show();
 	}
 	
+	/**
+	 * This method creates a menu to prompt if the admin really wants to delete a user or not
+	 * @param prompt
+	 * @param yes
+	 * @param user
+	 * @param userButton
+	 * @param removeButton
+	 * @param statement
+	 */
 	private static void promptDelete(Pane prompt, Button yes, Label user, Button userButton, Button removeButton, PreparedStatement statement) {
+		//Make the prompt visible
 		prompt.setVisible(true);
+		//Set the DELETE button of the prompt delete the selected user
 		yes.setOnAction((event) -> {
 			try {
 				statement.executeUpdate();
@@ -402,6 +437,7 @@ public class GUI extends Application {
 		
 		Button generateButton = createButton(
 				(event) -> {
+					//Create roles from selected check boxes
 					int numRoles = 0;
 					if (adminRole.isSelected())
 						numRoles++;
@@ -510,7 +546,7 @@ public class GUI extends Application {
 		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 270);
 		errorMessage.setTextFill(Color.RED);
 		
-		boolean testEmpty = true;
+		boolean testEmpty = true;//This runs differently if the database is empty or not
 		try {
 			testEmpty = databaseHelper.isDatabaseEmpty();
 		}
@@ -542,12 +578,15 @@ public class GUI extends Application {
 				(event) -> {
 					if (passwordInput.getText().equals(confirmPasswordInput.getText()) && emailInput.getText().length() > 0) {
 						if (emptyDatabase) {
+							//If the database is empty, create an admin account
 							createFirstAdmin(emailInput.getText(), passwordInput.getText());
 							currentEmail = emailInput.getText();
 						} else {
+							//If the database is not empty, try to create a normal account
 							String inviteCode = codeInput.getText();
 							boolean validCode = databaseHelper.validateInviteCode(inviteCode);
 							String tempPass = Password.generateRandomString(12);
+							//Make sure the invite code is valid, otherwise throw an error
 							if (validCode) {
 								createAccount(emailInput.getText(), tempPass, databaseHelper.getInviteCodeRoles(inviteCode));
 								tempPassword.setText(tempPass);
@@ -556,6 +595,7 @@ public class GUI extends Application {
 								failCreateAccount(errorMessage, "Invite code is INVALID!");
 						}
 					} else {
+						//DO NOT create an account if the passwords don't match
 						failCreateAccount(errorMessage, "Passwords do NOT match!");
 					}
 				},
@@ -567,11 +607,13 @@ public class GUI extends Application {
 				},
 			"Back to Login", 13, 128, Pos.CENTER, 194, 290);
 		
+		//Add elements only if the database is not empty vs empty
 		if (!emptyDatabase)
 			root.getChildren().addAll(codeTitle, codeInput, tempPasswordTitle, tempPassword, backButton);
 		else
 			root.getChildren().addAll(passwordTitle,
 					passwordInput, confirmPasswordTitle, confirmPasswordInput);
+		//Add items regardless of database
 		root.getChildren().addAll(title, emailTitle, emailInput,
 				createButton, errorMessage);
 		
@@ -582,19 +624,38 @@ public class GUI extends Application {
 		appStage.show();
 	}
 	
+	/**
+	 * This function creates an admin and moves over to setup the rest of the account
+	 * @param email
+	 * @param password
+	 */
 	private static void createFirstAdmin(String email, String password) {
 		databaseHelper.register(email, password, new String[]{"admin"});
 		setSetupAccountPage();
 	}
 	
+	/**
+	 * This function creates a new account in the database
+	 * @param email
+	 * @param password
+	 * @param roles
+	 */
 	private static void createAccount(String email, String password, String[] roles) {
 		databaseHelper.register(email, password, roles);
 	}
 	
+	/**
+	 * Creates an error
+	 * @param errorText
+	 * @param message
+	 */
 	private static void failCreateAccount(Label errorText, String message) {
 		errorText.setText(message);
 	}
 	
+	/**
+	 * Create the account setup page
+	 */
 	public static void setSetupAccountPage() {
 		Pane root = new Pane();
 		
@@ -623,6 +684,7 @@ public class GUI extends Application {
 		
 		Button continueButton = createButton(
 				(event) -> {
+					//When setting up an account, check to see if the password needs to be reset
 					if (databaseHelper.shouldUserReset(currentEmail)) {
 						if (passwordInput.getText().equals(password2Input.getText()))
 							databaseHelper.setPassword(currentEmail, passwordInput.getText());
@@ -638,6 +700,7 @@ public class GUI extends Application {
 				middleInput, lastTitle, lastInput, preferredTitle, preferredInput,
 				continueButton, errorMessage);
 		
+		//If the password needs to be reset, add the password input fields
 		if (databaseHelper.shouldUserReset(currentEmail))
 			root.getChildren().addAll(passwordTitle, passwordInput, password2Title, password2Input);
 		
@@ -648,6 +711,13 @@ public class GUI extends Application {
 		appStage.show();
 	}
 	
+	/**
+	 * This function adds the extra information of an account to the database
+	 * @param first
+	 * @param middle
+	 * @param last
+	 * @param preferred
+	 */
 	private static void setupInformation(String first, String middle, String last, String preferred) {
 		databaseHelper.finishRegistration(currentEmail, first, middle, last, preferred);
 		setLoginPage();
