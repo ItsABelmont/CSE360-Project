@@ -135,7 +135,7 @@ class DatabaseHelper {
 	public String login(String email, String role) throws SQLException {
 		String query = "SELECT * FROM cse360users";
 		Statement stmt = connection.createStatement();
-		ResultSet rs = stmt.executeQuery(query); 
+		ResultSet rs = stmt.executeQuery(query);
 		
 		//The main changes for random
 		
@@ -179,6 +179,29 @@ class DatabaseHelper {
 			}
 		}
 		
+	}
+	
+	/**
+	 * Checks if an invite code is valid or not
+	 * @param invite
+	 * @throws SQLException
+	 */
+	public boolean validateInviteCode(String invite) {
+		try {
+			String sql = "SELECT * FROM invite"; 
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(sql); 
+	
+			while(rs.next()){
+				if(rs.getString("invite").equals(invite)) {
+					return true;
+				}
+			}
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
 	}
 	
 	//new invite funcitons
