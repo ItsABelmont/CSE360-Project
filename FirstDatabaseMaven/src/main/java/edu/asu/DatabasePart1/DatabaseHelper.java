@@ -3,6 +3,15 @@ import java.sql.*;
 import java.util.Random;
 import java.util.Scanner;
 
+/**
+ * </p> DatabaseHelper </p>
+ * 
+ * Description: 
+ * 
+ * authors Lynn Robert Carter - Blake Thilbin - Just Wise
+ * 
+ * 
+ */
 class DatabaseHelper {
 
 	// JDBC driver name and database URL 

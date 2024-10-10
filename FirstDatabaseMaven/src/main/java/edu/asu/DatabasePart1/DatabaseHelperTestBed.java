@@ -1,4 +1,6 @@
 package edu.asu.DatabasePart1;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 
 public class DatabaseHelperTestBed {
 
@@ -29,10 +31,26 @@ public class DatabaseHelperTestBed {
             return dbHelper.doesUserExist("testuser@example.com", "student");
         });
 
-        // Validate an invite code
         performTestCase(4, "Validate Invite Code", () -> {
+            // Add the invite code and role to the invite table
             dbHelper.addInviteUser("inviteCode123", "student");
-            return dbHelper.validateInviteCode("inviteCode123");
+
+            // Simulate user input for username and password
+            String simulatedInput = "testuser@example.com\npassword123\n";
+            InputStream originalIn = System.in; // Save the original System.in
+
+            try {
+                System.setIn(new ByteArrayInputStream(simulatedInput.getBytes())); // Provide the simulated input
+
+                // Call inviteCode and process input
+                dbHelper.inviteCode("inviteCode123");
+                
+                // Check if the user was successfully registered
+                return dbHelper.doesUserExist("testuser@example.com", "student");
+
+            } finally {
+                System.setIn(originalIn); // Restore the original System.in
+            }
         });
 
         // Delete a user from the database
