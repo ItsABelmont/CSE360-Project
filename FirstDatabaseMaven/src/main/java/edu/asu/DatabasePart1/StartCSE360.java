@@ -265,7 +265,6 @@ public class StartCSE360 {
 	
 	private static void adminFlow() throws SQLException {
        //just test thingie databaseHelper.displayUsersByAdmin();
-		databaseHelper.displayUsersByAdmin();
 		if(!databaseHelper.getpreferredName().equals("placeholder")) {
 			System.out.println("Hello " + databaseHelper.getpreferredName() + " What would you like to do?");
 		}
@@ -369,12 +368,6 @@ public class StartCSE360 {
 	}
 	
 	public static void checkRoles() {
-		try {
-			databaseHelper.displayUsersByAdmin();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		
 		String[] arr = userRole.split(",", 0);
 		
