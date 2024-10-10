@@ -1,9 +1,9 @@
 package edu.asu.DatabasePart1;
 
 /**
- * <p> Roles Class </p>
+ * <p> Roles Class  </p>
  * 
- * <p> Description: </p>
+ * <p> Description: This class handles the admin, instructor and student roles  </p>
  * 
  * @author 
  * 
