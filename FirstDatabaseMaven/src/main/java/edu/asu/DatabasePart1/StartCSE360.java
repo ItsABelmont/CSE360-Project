@@ -19,8 +19,18 @@ public class StartCSE360 {
 
 	public static void main( String[] args )
 	{
-
-		try { 
+		
+		try {
+			databaseHelper.connectToDatabase();
+		}
+		catch (SQLException e) {
+			System.err.println("Database error: " + e.getMessage());
+			e.printStackTrace();
+		}
+		
+		GUI.start(databaseHelper);
+		
+		/*try { 
 			int length = 8;
 			databaseHelper.connectToDatabase();  // Connect to the database
 			
@@ -39,17 +49,17 @@ public class StartCSE360 {
 					System.out.println("Insert invite code.");
 					String choose = scanner.nextLine();
 					databaseHelper.inviteCode(choose);
-					/*
-					if(choose.equals("1")) {
-						setupAdmin();
-					}
-					else if(choose.equals("2")) {
-						instructorFlow();
-					}
-					else {
-						studentFlow();
-					}
-					*/
+					
+//					if(choose.equals("1")) {
+//						setupAdmin();
+//					}
+//					else if(choose.equals("2")) {
+//						instructorFlow();
+//					}
+//					else {
+//						studentFlow();
+//					}
+					
 					break;
 				case "2":
 					System.out.print("Enter Email: ");
@@ -59,7 +69,7 @@ public class StartCSE360 {
 					String password2 = scanner.nextLine();
 					password = password2;
 					
-					userRole = databaseHelper.login(email, password);
+					userRole = Roles.ArrayToString(databaseHelper.login(email, password));
 					
 					//if a user has no roles than they do not exist and can not login
 					if (userRole.equals(""))
@@ -82,7 +92,7 @@ public class StartCSE360 {
 		finally {
 			System.out.println("Good Bye!!");
 			databaseHelper.closeConnection();
-		}
+		}*/
 	}
 
 	private static void setupAdmin() throws SQLException {		//enhancement
@@ -341,7 +351,7 @@ public class StartCSE360 {
 	
 	public static void generateInviteCode() {
 		String role = "";
-		int length = 8;
+		int length = 12;
 		
 		System.out.println("What role would you like the user to have?");
 		System.out.println("1. Admin\n2.Instructor\n3.Student");
@@ -355,14 +365,11 @@ public class StartCSE360 {
 		else 
 			role = "student";
 		
-		String invite = hashPassword.hash(hashPassword.generateRandomString(length));
+		String invite = Password.generateRandomString(length);
 		System.out.println("Here is the invite code.");
 		System.out.println(invite);
-		try {
-			databaseHelper.addInviteUser(invite, role);
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+		
+		databaseHelper.addInviteUser(invite, new String[] {role});
 
 		
 	}

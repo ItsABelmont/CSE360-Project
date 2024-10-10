@@ -1,7 +1,9 @@
 package edu.asu.DatabasePart1;
 import java.sql.*;
-import java.util.Random;
 import java.util.Scanner;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * </p> DatabaseHelper </p>
@@ -15,9 +17,8 @@ import java.util.Scanner;
 class DatabaseHelper {
 
 	// JDBC driver name and database URL 
-	static final String JDBC_DRIVER = "org.h2.Driver";   
-	static final String DB_URL = "jdbc:h2:~/firstDatabase";  
-	private static final Password hashPassword = new Password();
+	static final String JDBC_DRIVER = "org.h2.Driver";
+	static final String DB_URL = "jdbc:h2:~/firstDatabase";
 
 	//  Database credentials 
 	static final String USER = "sa"; 
@@ -45,6 +46,7 @@ class DatabaseHelper {
 	}
 
 	private void createTables() throws SQLException {
+		//main user table
 		String userTable = "CREATE TABLE IF NOT EXISTS cse360users ("
 				+ "id INT AUTO_INCREMENT PRIMARY KEY, "
 				+ "email VARCHAR(255), "
@@ -54,12 +56,31 @@ class DatabaseHelper {
 				+ "lastName VARCHAR(255), "
 				+ "preferredName VARCHAR(255), "
 				+ "role VARCHAR(255), "
-				+ "random VARCHAR(255))";
-		statement.execute(userTable);
+				+ "random VARCHAR(255), "
+				+ "userReset VARCHAR(255))";
+		statement.execute(userTable); //initializes main table
 		String inviteTable = "CREATE TABLE IF NOT EXISTS invite ("
 				+ "invite VARCHAR(255), "
 				+ "role VARCHAR(255))";
-		statement.execute(inviteTable);
+		statement.execute(inviteTable); //initializes invite table
+		String expireTable = "CREATE TABLE IF NOT EXISTS expire ("
+				+ "email VARCHAR(255), "
+				+ "password VARCHAR(255), "
+				+ "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)";
+		statement.execute(expireTable); //initializes expire table
+		
+		//these function checks all temp passwords to see if they expire and to delete them in 30 days
+		ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+		Runnable task = () -> {
+		    try {
+		        String deleteExpired = "DELETE FROM expire WHERE created_at < TIMESTAMPADD(DAY, -30, NOW())";
+		        statement.execute(deleteExpired);
+		    } catch (SQLException e) {
+		        e.printStackTrace();
+		    }
+		};
+		scheduler.scheduleAtFixedRate(task, 0, 1, TimeUnit.DAYS);
+		
 	}
 
 
@@ -74,17 +95,174 @@ class DatabaseHelper {
 		return true;
 	}
 	
-	public void register(String email, String password, String role) throws SQLException {
-		String insertUser = "INSERT INTO cse360users (email, password, firstName, middleName, lastName, preferredName, role, random) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-		String random = hashPassword.generateRandomString(8);
+	/**
+	 * This function creates a new account and adds it to the database
+	 * @param email
+	 * @param password
+	 * @param roles
+	 */
+	public void register(String email, String password, String[] roles) {
+		String insertUser = "INSERT INTO cse360users (email, password, firstName, middleName, lastName, preferredName, role, random, userReset) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+		String random = Password.generateRandomString(8);
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
 			pstmt.setString(1, email);
-			pstmt.setString(2, hashPassword.hashFull(password, random));
+			pstmt.setString(2, Password.hashFull(password, random));
 			pstmt.setString(3, "placeholder");
 			pstmt.setString(4, "placeholder");
 			pstmt.setString(5, "placeholder");
 			pstmt.setString(6, "placeholder");
-			pstmt.setString(7, role);
+			pstmt.setString(7, Roles.ArrayToString(roles));
+			pstmt.setString(8, random);
+			pstmt.setString(9, "f");
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		insertUser = "INSERT INTO invite (invite, role) VALUES (?, ?)";
+
+		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)){
+			pstmt.setString(1, "invites");
+			pstmt.setString(2, "roles");
+			pstmt.executeUpdate();
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		insertUser = "INSERT INTO expire (email, password) VALUES(?,?)";
+		
+		//inserts expire user values equating to zero
+		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)){
+			pstmt.setString(1, "");
+			pstmt.setString(2, "");
+			pstmt.executeUpdate();
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	//this reset the user password with the temp one time password
+	public String resetPassword(String email) {
+		
+		//updates main user telling them that they do not need to reset anymore
+		String sql = "UPDATE cse360users SET userReset = ? WHERE email = ?";
+		
+		try(PreparedStatement statement = connection.prepareStatement(sql)){
+			statement.setString(1, "f");
+			statement.setString(2, email);
+			statement.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		String pass = Password.generateRandomString(12);
+		
+		String query = "SELECT * FROM cse360users";
+		Statement stmt;
+		ResultSet rs;
+		try {
+			stmt = connection.createStatement();
+			rs = stmt.executeQuery(query);
+		
+			//gets the random for string which is a security measure
+			String full = "";
+			while(rs.next()) {
+				if(rs.getString("email").equals(email)) {
+					full = Password.hashFull(pass, rs.getString("random"));
+				}
+			}
+		
+			//updates the base password with the password hash full from password class hash security
+			sql = "UPDATE cse360users SET password = ? WHERE email = ?";
+			
+			try(PreparedStatement statement = connection.prepareStatement(sql)){
+				statement.setString(1, full);
+				statement.setString(2, email);
+				statement.executeUpdate();
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} 
+		
+		return pass;
+		
+	}
+	
+	public void setPassword(String email, String password) {
+		try {
+			String query = "SELECT * FROM expire";
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(query);
+			
+			while(rs.next()) {
+				if(rs.getString("email").equals(email)) {
+					String sql = "UPDATE cse360users SET password = ? WHERE email = ?";
+					PreparedStatement statement = connection.prepareStatement(sql);
+					statement.setString(1, Password.hashFull(password, rs.getString("random")));
+					statement.setString(2, email);
+					statement.executeUpdate();
+					return;
+				}
+			}
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	//asks for temp password to see if it is a valid one based off of the email inserted
+	public String userReset(String email) throws SQLException{
+		Scanner scanner = new Scanner(System.in);
+		
+		String query = "SELECT * FROM expire";
+		Statement stmt = connection.createStatement();
+		ResultSet rs = stmt.executeQuery(query); 
+		
+		System.out.println("Looks like your account is trying to be reset go ahead\n"
+				+ "and insert the temp password you where given to reset your password!\n");
+		
+		//checks to see if it is valid and if so go to resetPassword function/method
+		while(rs.next()) {
+			if(rs.getString("email").equals(email)) {
+				String pass = scanner.nextLine();
+				if(rs.getString("password").equals(pass)) {
+					String hold = resetPassword(email);
+					
+					String sql = "DELETE FROM expire WHERE password = ?";
+					PreparedStatement statement = connection.prepareStatement(sql);
+					statement.setString(1, pass);
+					statement.executeUpdate();
+					
+					return hold;
+				}
+				else {
+					System.out.println("That is not the password!");
+				}
+			}
+		}
+		return "";
+		
+	}
+	
+	/**
+	 * This register function takes the database string representation and is used for the console-based version of the app
+	 * @param email
+	 * @param password
+	 * @param roles
+	 * @throws SQLException
+	 */
+	public void register(String email, String password, String roles) throws SQLException {
+		String insertUser = "INSERT INTO cse360users (email, password, firstName, middleName, lastName, preferredName, role, random) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+		String random = Password.generateRandomString(8);
+		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
+			pstmt.setString(1, email);
+			pstmt.setString(2, Password.hashFull(password, random));
+			pstmt.setString(3, "placeholder");
+			pstmt.setString(4, "placeholder");
+			pstmt.setString(5, "placeholder");
+			pstmt.setString(6, "placeholder");
+			pstmt.setString(7, roles);
 			pstmt.setString(8, random);
 			pstmt.executeUpdate();
 		}
@@ -141,23 +319,69 @@ class DatabaseHelper {
 		System.out.println("HELLO, " + save);
 	 */
 	
-	public String login(String email, String password) throws SQLException {
+	//check to see if user must reset before they log on
+	public String doesUserReset(String email, String password) throws SQLException{
 		String query = "SELECT * FROM cse360users";
 		Statement stmt = connection.createStatement();
 		ResultSet rs = stmt.executeQuery(query); 
 		
-		//The main changes for random
+		String newPassword = "";	
 		
+		//check if they must reset based off of the user reset value being t or true for example
 		while(rs.next()) {
-			//big if determines if user is in and gives their role
-			if(rs.getString("email").equals(email) && rs.getString("password").equals(Password.hashFull(password,  rs.getString("random")))) {
-				this.universalpreferredName = rs.getString("preferredName"); 
-				this.universalfirstName = rs.getString("firstName");
-				return rs.getString("role");
+			if(rs.getString("userReset").equals("t") && rs.getString("email").equals(email) && rs.getString("password").equals(Password.hashFull(password,  rs.getString("random")))) {
+				return newPassword = userReset(email);
 			}
 		}
 		
-		return "";
+		return newPassword;
+		
+	}
+	
+	public boolean shouldUserReset(String email) {
+		String query = "SELECT * FROM cse360users";
+		Statement stmt;
+		try {
+			stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(query); 
+			
+			//check if they must reset based off of the user reset value being t or true for example
+			while(rs.next()) {
+				if(rs.getString("userReset").equals("t") && rs.getString("email").equals(email)) {
+					return true;
+				}
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return false;
+	}
+	
+	public String[] login(String email, String password) {
+		String query = "SELECT * FROM cse360users";
+		
+		try {
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(query); 
+			
+			//The main changes for random
+			
+			while(rs.next()) {
+				//big if determines if user is in and gives their role
+				if(rs.getString("email").equals(email) && rs.getString("password").equals(Password.hashFull(password, rs.getString("random")))) {
+					this.universalpreferredName = rs.getString("preferredName"); 
+					this.universalfirstName = rs.getString("firstName");
+					return Roles.stringToArray(rs.getString("role"));
+				}
+			}
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return new String[] {};
 	}
 	
 	public String getFirstName() {
@@ -166,8 +390,57 @@ class DatabaseHelper {
 	public String getRole() {
 		return this.universalRole;
 	}
+	public String[] getRoles() {
+		return Roles.stringToArray(this.universalRole);
+	}
 	public String getpreferredName() {
 		return this.universalpreferredName;
+	}
+	
+	/**
+	 * Checks if an invite code is valid or not
+	 * @param invite
+	 * @throws SQLException
+	 */
+	public boolean validateInviteCode(String invite) {
+		try {
+			String sql = "SELECT * FROM invite"; 
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(sql); 
+	
+			while(rs.next()) {
+				if(rs.getString("invite").equals(Password.hash(invite))) {
+					return true;
+				}
+			}
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	/**
+	 * Returns the role of a given invite code
+	 * @param invite
+	 * @throws SQLException
+	 */
+	public String[] getInviteCodeRoles(String invite) {
+		try {
+			String sql = "SELECT * FROM invite"; 
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(sql); 
+	
+			while(rs.next()){
+				if(rs.getString("invite").equals(Password.hash(invite))) {
+					return Roles.stringToArray(rs.getString("role"));
+				}
+			}
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return new String[] {};
 	}
 	
 	//new invite functions
@@ -179,7 +452,7 @@ class DatabaseHelper {
 
 		while(rs.next()){
 			if(rs.getString("invite").equals(invite)) {
-				System.out.println("Huzzah! It works give a unsername and password\nUsername: ");
+				System.out.println("Huzzah! It works give a username and password\nUsername: ");
 				String email = scanner.nextLine();
 				System.out.println("Password: ");
 				String password = scanner.nextLine();
@@ -191,25 +464,29 @@ class DatabaseHelper {
 	}
 	
 	//new invite funcitons
-	public void addInviteUser(String invite, String role) throws SQLException{
+	public void addInviteUser(String invite, String[] roles) {
 		String insertUser = "INSERT INTO invite (invite, role) VALUES (?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)){
-			pstmt.setString(1, invite);
-			pstmt.setString(2, role);
+			pstmt.setString(1, Password.hash(invite));
+			pstmt.setString(2, Roles.ArrayToString(roles));
 			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 	}
 	
-	public void finishRegistration(String email, String first, String middle, String last, String preferred) throws SQLException{
+	public void finishRegistration(String email, String first, String middle, String last, String preferred) {
 		
 		String sql = "UPDATE cse360users SET preferredName = ? WHERE email = ?";
-		
+		System.out.println(email + " " + preferred);
 		try(PreparedStatement statement = connection.prepareStatement(sql)){
 			statement.setString(1, preferred);
 			statement.setString(2, email);
 			int rowAffected = statement.executeUpdate();
 			this.universalpreferredName = preferred;
 
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 		//to get middle and last just keeping repeating this code over and over
 		sql = "UPDATE cse360users SET firstName = ? WHERE email = ?";
@@ -221,6 +498,8 @@ class DatabaseHelper {
 			int rowAffected = statement.executeUpdate();
 			this.universalfirstName = first;
 
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 		
 		sql = "UPDATE cse360users SET middleName = ? WHERE email = ?";
@@ -229,6 +508,8 @@ class DatabaseHelper {
 			statement.setString(1, middle);
 			statement.setString(2, email);
 			int rowAffected = statement.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 		
 		sql = "UPDATE cse360users SET lastName = ? WHERE email = ?";
@@ -237,6 +518,8 @@ class DatabaseHelper {
 			statement.setString(1, last);
 			statement.setString(2, email);
 			int rowAffected = statement.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 		
 		
@@ -277,6 +560,36 @@ class DatabaseHelper {
 		
 	}
 	
+	public PreparedStatement deleteUser(String email) {
+		String sql = "DELETE FROM cse360users WHERE email=?";
+
+		PreparedStatement statement = null;
+		try {
+			statement = connection.prepareStatement(sql);
+			statement.setString(1, email);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return statement;
+	}
+	
+	public void setUserRoles(String email, String[] roles) {
+		try {
+			String sql = "UPDATE cse360users SET role = ? WHERE email = ?";
+			
+			try(PreparedStatement statement = connection.prepareStatement(sql)){
+				statement.setString(1, Roles.ArrayToString(roles));
+				statement.setString(2, email);
+				statement.executeUpdate();
+			}
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	//add users
 	public void addUserRole(String email, String role) throws SQLException{
 		String sql = "SELECT * FROM cse360users"; 
 		Statement stmt = connection.createStatement();
@@ -284,6 +597,7 @@ class DatabaseHelper {
 		
 		String saved = "";
 		
+		//goes through searching through user based off of their email
 		while(rs.next()) {
 			if(rs.getString("email").equals(email)) {
 				saved = rs.getString("role");
@@ -295,6 +609,7 @@ class DatabaseHelper {
 			return;
 		}
 		
+		//updates user roles which is a full string
 		sql = "UPDATE cse360users SET role = ? WHERE email = ?";
 		
 		try(PreparedStatement statement = connection.prepareStatement(sql)){
@@ -305,6 +620,8 @@ class DatabaseHelper {
 		
 	}
 	
+	
+	//removes users role by updating thier role
 	public void removeUserRole(String email, String role) throws SQLException{		
 		String sql = "SELECT * FROM cse360users"; 
 		Statement stmt = connection.createStatement();
@@ -312,12 +629,13 @@ class DatabaseHelper {
 		
 		String saved = "";
 		
+		//checks to see if email is valid
 		while(rs.next()) {
 			if(rs.getString("email").equals(email)) {
 				saved = rs.getString("role");
-				System.out.print("Hello " + saved);
 			}
 		}
+		//checks if user even has roles if not they do not exist
 		if(saved.equals("")) {
 			System.out.println("User does not exist!");
 			return;
@@ -325,6 +643,7 @@ class DatabaseHelper {
 		
 		saved = saved.replace(role, "");
 		
+		//updates and changes the role
 		sql = "UPDATE cse360users SET role = ? WHERE email = ?";
 		
 		try(PreparedStatement statement = connection.prepareStatement(sql)){
@@ -333,6 +652,60 @@ class DatabaseHelper {
 			statement.executeUpdate();
 		}
 		
+	}
+	
+	//This is used for the lambda in forEachUser
+	public interface UserMethod {
+		void doThing(int id, String email, String[] roles, String first, String middle, String last, String preferred);
+	}
+	
+	public String[] getRoles(String email) {
+		String sql = "SELECT * FROM cse360users WHERE email = ?";
+		
+		try {
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(sql); 
+	
+			while(rs.next()) {
+				if (rs.getString("email").equals(email))
+					return Roles.stringToArray(rs.getString("role"));
+			}
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return new String[] {};
+	}
+	
+	/**
+	 * This method performs a given action looping through every user
+	 * @param method
+	 */
+	public void forEachUser(UserMethod method) {
+		String sql = "SELECT * FROM cse360users";
+		
+		try {
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(sql); 
+	
+			while(rs.next()) {
+				// Retrieve by column name 
+				int id  = rs.getInt("id");
+				String  email = rs.getString("email");
+				if (email.equals(""))
+					continue;
+				//String password = rs.getString("password");
+				String role = rs.getString("role");
+				String first = rs.getString("firstName");
+				String middle = rs.getString("middleName");
+				String last = rs.getString("lastName");
+				String preferred = rs.getString("preferredName");
+				method.doThing(id, email, Roles.stringToArray(role), first, middle, last, preferred);
+			}
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public void displayUsersByAdmin() throws SQLException{
