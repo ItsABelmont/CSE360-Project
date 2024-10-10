@@ -5,6 +5,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * </p> DatabaseHelper </p>
+ * 
+ * Description: 
+ * 
+ * authors Lynn Robert Carter - Blake Thilbin - Just Wise
+ * 
+ * 
+ */
 class DatabaseHelper {
 
 	// JDBC driver name and database URL 
