@@ -18,10 +18,13 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 /**
- * This class contains the definition for the graphical interface
+ * <p> GUI class </p>
+ * 
+ * <p> Description: This class contains the definition for the graphical interface </p>
  * 
  * @author Just Wise
  *
+ * @version 1.0 2024-10-9
  */
 public class GUI extends Application {
 	

@@ -8,6 +8,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
+/**
+ * </p> StartCSE360 Class </p>
+ * 
+ * <p> Description: This class is the core of the project. It includes user registration, login, and role management. </p>
+ * 
+ * @authors Lynn Robert Carter - Blake Philibin - Just Wise 
+ * 
+ * @version 1.0	2024-10-9	
+ */
+
 public class StartCSE360 {
 
 	private static final DatabaseHelper databaseHelper = new DatabaseHelper();

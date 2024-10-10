@@ -4,13 +4,13 @@ import java.util.Random;
 import java.util.Scanner;
 
 /**
- * </p> DatabaseHelper </p>
+ * </p> DatabaseHelper Class </p>
  * 
- * Description: 
+ * Description: This class allows user registration, login, and other administration functionalities 
  * 
- * authors Lynn Robert Carter - Blake Thilbin - Just Wise
+ * @authors Lynn Robert Carter - Blake Thilbin - Just Wise
  * 
- * 
+ * @version 1.0	2024-10-9	An implementation of user registration and login features
  */
 class DatabaseHelper {
 
@@ -31,7 +31,11 @@ class DatabaseHelper {
 	private Connection connection = null;
 	private Statement statement = null; 
 	//	PreparedStatement pstmt
-
+	
+	/**
+	 * This establishes a connection to the database. It also creates an object statement and necessary tables.
+	 * @throws SQLException if an error occurs.
+	 */
 	public void connectToDatabase() throws SQLException {
 		try {
 			Class.forName(JDBC_DRIVER); // Load the JDBC driver
@@ -43,7 +47,11 @@ class DatabaseHelper {
 			System.err.println("JDBC Driver not found: " + e.getMessage());
 		}
 	}
-
+	
+	/**
+	 * Creates the necessary tables for users and invites if they don't already exist.
+	 * @throws SQLException
+	 */
 	private void createTables() throws SQLException {
 		String userTable = "CREATE TABLE IF NOT EXISTS cse360users ("
 				+ "id INT AUTO_INCREMENT PRIMARY KEY, "
@@ -63,7 +71,11 @@ class DatabaseHelper {
 	}
 
 
-	// Check if the database is empty
+	/**
+	 * Checks if the database contains any users.
+	 * @return true if the database is empty, otherwise it's false.
+	 * @throws SQLException
+	 */
 	public boolean isDatabaseEmpty() throws SQLException {
 		String query = "SELECT COUNT(*) AS count FROM cse360users";
 		ResultSet resultSet = statement.executeQuery(query);
@@ -74,6 +86,10 @@ class DatabaseHelper {
 		return true;
 	}
 	
+	/**
+	 * Registers a new user with the given email, password, and role, and stores the data in the database.
+	 * @throws SQLException
+	 */
 	public void register(String email, String password, String role) throws SQLException {
 		String insertUser = "INSERT INTO cse360users (email, password, firstName, middleName, lastName, preferredName, role, random) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 		String random = hashPassword.generateRandomString(8);
@@ -141,6 +157,11 @@ class DatabaseHelper {
 		System.out.println("HELLO, " + save);
 	 */
 	
+	/**
+	 * Authenticates a user by verifying the email and password. If successful, return the user's role.
+	 * @return the user's role if login is successful, empty string otherwise
+	 * @throws SQLException
+	 */
 	public String login(String email, String password) throws SQLException {
 		String query = "SELECT * FROM cse360users";
 		Statement stmt = connection.createStatement();
@@ -170,7 +191,11 @@ class DatabaseHelper {
 		return this.universalpreferredName;
 	}
 	
-	//new invite functions
+	/**
+	 * Validates an invite code, prompts for user credentials.
+	 * Registers the user with the associated role.
+	 * @throws SQLException
+	 */
 	public void inviteCode(String invite) throws SQLException{
 		String sql = "SELECT * FROM invite"; 
 		Statement stmt = connection.createStatement();
@@ -190,7 +215,10 @@ class DatabaseHelper {
 		
 	}
 	
-	//new invite funcitons
+	/**
+	 * Adds a new invite code with an associated role to the database.
+	 * @throws SQLException
+	 */
 	public void addInviteUser(String invite, String role) throws SQLException{
 		String insertUser = "INSERT INTO invite (invite, role) VALUES (?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)){
