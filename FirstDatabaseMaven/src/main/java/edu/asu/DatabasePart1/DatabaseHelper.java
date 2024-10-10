@@ -8,9 +8,9 @@ import java.util.Scanner;
  * 
  * Description: This class handles the database of the project. 
  * 
- * authors Lynn Robert Carter - Blake Thilbin - Just Wise - Reem Helal
+ * @authors Lynn Robert Carter - Blake Thilbin - Just Wise - Reem Helal
  * 
- * 
+ * @version 1.0  
  */
 class DatabaseHelper {
 
