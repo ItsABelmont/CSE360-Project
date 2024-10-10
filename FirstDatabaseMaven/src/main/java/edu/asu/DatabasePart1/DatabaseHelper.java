@@ -6,13 +6,13 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * </p> DatabaseHelper </p>
+ * </p> DatabaseHelper Class </p>
  * 
- * Description: 
+ * Description: This class allows user registration, login, and other administration functionalities 
  * 
- * authors Lynn Robert Carter - Blake Thilbin - Just Wise
+ * @authors Lynn Robert Carter - Blake Thilbin - Just Wise
  * 
- * 
+ * @version 1.0	2024-10-9	An implementation of user registration and login features
  */
 class DatabaseHelper {
 
@@ -33,6 +33,10 @@ class DatabaseHelper {
 	private Statement statement = null; 
 	//	PreparedStatement pstmt
 
+	/**
+	 * This establishes a connection to the database. It also creates an object statement and necessary tables.
+	 * @throws SQLException if an error occurs.
+	 */
 	public void connectToDatabase() throws SQLException {
 		try {
 			Class.forName(JDBC_DRIVER); // Load the JDBC driver
@@ -45,6 +49,10 @@ class DatabaseHelper {
 		}
 	}
 
+	/**
+	 * Creates the necessary tables for users and invites if they don't already exist.
+	 * @throws SQLException
+	 */
 	private void createTables() throws SQLException {
 		//main user table
 		String userTable = "CREATE TABLE IF NOT EXISTS cse360users ("
@@ -84,7 +92,11 @@ class DatabaseHelper {
 	}
 
 
-	// Check if the database is empty
+	/**
+	 * Checks if the database contains any users.
+	 * @return true if the database is empty, otherwise it's false.
+	 * @throws SQLException
+	 */
 	public boolean isDatabaseEmpty() throws SQLException {
 		String query = "SELECT COUNT(*) AS count FROM cse360users";
 		ResultSet resultSet = statement.executeQuery(query);
@@ -142,7 +154,11 @@ class DatabaseHelper {
 		}
 	}
 	
-	//this reset the user password with the temp one time password
+	/**
+	 * this reset the user password with the temp one time password
+	 * @param email
+	 * @return
+	 */
 	public String resetPassword(String email) {
 		
 		//updates main user telling them that they do not need to reset anymore
@@ -189,6 +205,11 @@ class DatabaseHelper {
 		
 	}
 	
+	/**
+	 * Sets the password of an account
+	 * @param email
+	 * @param password
+	 */
 	public void setPassword(String email, String password) {
 		try {
 			String query = "SELECT * FROM expire";
@@ -211,7 +232,12 @@ class DatabaseHelper {
 		}
 	}
 	
-	//asks for temp password to see if it is a valid one based off of the email inserted
+	/**
+	 * asks for temp password to see if it is a valid one based off of the email inserted
+	 * @param email
+	 * @return
+	 * @throws SQLException
+	 */
 	public String userReset(String email) throws SQLException{
 		Scanner scanner = new Scanner(System.in);
 		
@@ -319,7 +345,13 @@ class DatabaseHelper {
 		System.out.println("HELLO, " + save);
 	 */
 	
-	//check to see if user must reset before they log on
+	/**
+	 * check to see if user must reset before they log on
+	 * @param email
+	 * @param password
+	 * @return
+	 * @throws SQLException
+	 */
 	public String doesUserReset(String email, String password) throws SQLException{
 		String query = "SELECT * FROM cse360users";
 		Statement stmt = connection.createStatement();
@@ -338,6 +370,11 @@ class DatabaseHelper {
 		
 	}
 	
+	/**
+	 * Returns if a user needs to reset their password
+	 * @param email
+	 * @return
+	 */
 	public boolean shouldUserReset(String email) {
 		String query = "SELECT * FROM cse360users";
 		Statement stmt;
@@ -359,6 +396,11 @@ class DatabaseHelper {
 		return false;
 	}
 	
+	/**
+	 * Authenticates a user by verifying the email and password. If successful, return the user's role.
+	 * @return the user's role if login is successful, empty string otherwise
+	 * @throws SQLException
+	 */
 	public String[] login(String email, String password) {
 		String query = "SELECT * FROM cse360users";
 		
@@ -443,7 +485,11 @@ class DatabaseHelper {
 		return new String[] {};
 	}
 	
-	//new invite functions
+	/**
+	 * Validates an invite code, prompts for user credentials.
+	 * Registers the user with the associated role.
+	 * @throws SQLException
+	 */
 	public void inviteCode(String invite) throws SQLException{
 		String sql = "SELECT * FROM invite"; 
 		Statement stmt = connection.createStatement();
@@ -463,7 +509,10 @@ class DatabaseHelper {
 		
 	}
 	
-	//new invite funcitons
+	/**
+	 * Adds a new invite code with an associated role to the database.
+	 * @throws SQLException
+	 */
 	public void addInviteUser(String invite, String[] roles) {
 		String insertUser = "INSERT INTO invite (invite, role) VALUES (?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)){
@@ -475,6 +524,14 @@ class DatabaseHelper {
 		}
 	}
 	
+	/**
+	 * Writes the remaining data to the database
+	 * @param email
+	 * @param first
+	 * @param middle
+	 * @param last
+	 * @param preferred
+	 */
 	public void finishRegistration(String email, String first, String middle, String last, String preferred) {
 		
 		String sql = "UPDATE cse360users SET preferredName = ? WHERE email = ?";
@@ -525,6 +582,12 @@ class DatabaseHelper {
 		
 	}
 	
+	/**
+	 * Returns if an email exists in the user database
+	 * @param email
+	 * @param role
+	 * @return
+	 */
 	public boolean doesUserExist(String email, String role) {
 	    String query = "SELECT COUNT(*) FROM cse360users WHERE email = ? AND role = ?";
 	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -543,6 +606,10 @@ class DatabaseHelper {
 	    return false; // If an error occurs, assume user doesn't exist
 	}
 	
+	/**
+	 * Deletes a user from the database
+	 * @throws SQLException
+	 */
 	public void deleteUser() throws SQLException{
 		String sql = "DELETE FROM cse360users WHERE email=?";
 		Scanner scanner = new Scanner(System.in);
@@ -560,6 +627,11 @@ class DatabaseHelper {
 		
 	}
 	
+	/**
+	 * Starts the process of deleting a user and returns the object needed to finish the delete
+	 * @param email
+	 * @return
+	 */
 	public PreparedStatement deleteUser(String email) {
 		String sql = "DELETE FROM cse360users WHERE email=?";
 
@@ -574,6 +646,11 @@ class DatabaseHelper {
 		return statement;
 	}
 	
+	/**
+	 * Sets the roles of a user given their email
+	 * @param email
+	 * @param roles
+	 */
 	public void setUserRoles(String email, String[] roles) {
 		try {
 			String sql = "UPDATE cse360users SET role = ? WHERE email = ?";
@@ -589,7 +666,12 @@ class DatabaseHelper {
 		}
 	}
 	
-	//add users
+	/**
+	 * Add roles to a user
+	 * @param email
+	 * @param role
+	 * @throws SQLException
+	 */
 	public void addUserRole(String email, String role) throws SQLException{
 		String sql = "SELECT * FROM cse360users"; 
 		Statement stmt = connection.createStatement();
@@ -621,7 +703,12 @@ class DatabaseHelper {
 	}
 	
 	
-	//removes users role by updating thier role
+	/**
+	 * removes users role by updating thier role
+	 * @param email
+	 * @param role
+	 * @throws SQLException
+	 */
 	public void removeUserRole(String email, String role) throws SQLException{		
 		String sql = "SELECT * FROM cse360users"; 
 		Statement stmt = connection.createStatement();
@@ -659,6 +746,11 @@ class DatabaseHelper {
 		void doThing(int id, String email, String[] roles, String first, String middle, String last, String preferred);
 	}
 	
+	/**
+	 * Gets the string array of roles for a user
+	 * @param email
+	 * @return
+	 */
 	public String[] getRoles(String email) {
 		String sql = "SELECT * FROM cse360users WHERE email = ?";
 		
@@ -708,6 +800,10 @@ class DatabaseHelper {
 		}
 	}
 	
+	/**
+	 * A legacy console command for displaying all of the users
+	 * @throws SQLException
+	 */
 	public void displayUsersByAdmin() throws SQLException{
 		String sql = "SELECT * FROM cse360users"; 
 		Statement stmt = connection.createStatement();
@@ -737,6 +833,10 @@ class DatabaseHelper {
 		} 
 	}
 	
+	/**
+	 * A legacy console command for displaying users
+	 * @throws SQLException
+	 */
 	public void displayUsersByInstructor() throws SQLException{		//enhancement
 		String sql = "SELECT * FROM cse360users"; 
 		Statement stmt = connection.createStatement();
@@ -757,6 +857,10 @@ class DatabaseHelper {
 		} 
 	}
 	
+	/**
+	 * A legacy console command for displaying users
+	 * @throws SQLException
+	 */
 	public void displayUsersByStudent() throws SQLException{		// enhancement
 		String sql = "SELECT * FROM cse360users"; 
 		Statement stmt = connection.createStatement();
@@ -778,11 +882,17 @@ class DatabaseHelper {
 	}
 	
 	
-	
+	/**
+	 * Gets the connection object to the database
+	 * @return
+	 */
 	public Connection getConnection() {
 	    return connection;
 	}
 	
+	/**
+	 * Ends the connection to the database
+	 */
 	public void closeConnection() {
 		try{ 
 			if(statement!=null) statement.close(); 

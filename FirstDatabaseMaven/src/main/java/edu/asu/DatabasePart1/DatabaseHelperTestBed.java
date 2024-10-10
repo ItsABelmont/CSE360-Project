@@ -43,7 +43,7 @@ public class DatabaseHelperTestBed {
         //Validates if the invite code allows a user to register and checks if the user is successfully added to the database.
         performTestCase(4, "Validate Invite Code", () -> {
             // Add the invite code and role to the invite table
-            dbHelper.addInviteUser("inviteCode123", "student");
+            dbHelper.addInviteUser("inviteCode123", new String[]{"student"});
             
             // Call inviteCode, which will ask the user to input the username and password
             dbHelper.inviteCode("inviteCode123");
