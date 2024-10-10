@@ -1,14 +1,12 @@
 package edu.asu.DatabasePart1;
 import java.sql.*;
-import java.util.Random;
 import java.util.Scanner;
 
 class DatabaseHelper {
 
 	// JDBC driver name and database URL 
-	static final String JDBC_DRIVER = "org.h2.Driver";   
-	static final String DB_URL = "jdbc:h2:~/firstDatabase";  
-	private static final Password hashPassword = new Password();
+	static final String JDBC_DRIVER = "org.h2.Driver";
+	static final String DB_URL = "jdbc:h2:~/firstDatabase";
 
 	//  Database credentials 
 	static final String USER = "sa"; 
@@ -65,17 +63,58 @@ class DatabaseHelper {
 		return true;
 	}
 	
-	public void register(String email, String password, String role) throws SQLException {
+	/**
+	 * This function creates a new account and adds it to the database
+	 * @param email
+	 * @param password
+	 * @param roles
+	 */
+	public void register(String email, String password, String[] roles) {
 		String insertUser = "INSERT INTO cse360users (email, password, firstName, middleName, lastName, preferredName, role, random) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-		String random = hashPassword.generateRandomString(8);
+		String random = Password.generateRandomString(8);
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
 			pstmt.setString(1, email);
-			pstmt.setString(2, hashPassword.hashFull(password, random));
+			pstmt.setString(2, Password.hashFull(password, random));
 			pstmt.setString(3, "placeholder");
 			pstmt.setString(4, "placeholder");
 			pstmt.setString(5, "placeholder");
 			pstmt.setString(6, "placeholder");
-			pstmt.setString(7, role);
+			pstmt.setString(7, Roles.ArrayToString(roles));
+			pstmt.setString(8, random);
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		insertUser = "INSERT INTO invite (invite, role) VALUES (?, ?)";
+
+		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)){
+			pstmt.setString(1, "invites");
+			pstmt.setString(2, "roles");
+			pstmt.executeUpdate();
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * This register function takes the database string representation and is used for the console-based version of the app
+	 * @param email
+	 * @param password
+	 * @param roles
+	 * @throws SQLException
+	 */
+	public void register(String email, String password, String roles) throws SQLException {
+		String insertUser = "INSERT INTO cse360users (email, password, firstName, middleName, lastName, preferredName, role, random) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+		String random = Password.generateRandomString(8);
+		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
+			pstmt.setString(1, email);
+			pstmt.setString(2, Password.hashFull(password, random));
+			pstmt.setString(3, "placeholder");
+			pstmt.setString(4, "placeholder");
+			pstmt.setString(5, "placeholder");
+			pstmt.setString(6, "placeholder");
+			pstmt.setString(7, roles);
 			pstmt.setString(8, random);
 			pstmt.executeUpdate();
 		}
@@ -132,23 +171,29 @@ class DatabaseHelper {
 		System.out.println("HELLO, " + save);
 	 */
 	
-	public String login(String email, String password) throws SQLException {
+	public String[] login(String email, String password) {
 		String query = "SELECT * FROM cse360users";
-		Statement stmt = connection.createStatement();
-		ResultSet rs = stmt.executeQuery(query); 
 		
-		//The main changes for random
-		
-		while(rs.next()) {
-			//big if determines if user is in and gives their role
-			if(rs.getString("email").equals(email) && rs.getString("password").equals(Password.hashFull(password,  rs.getString("random")))) {
-				this.universalpreferredName = rs.getString("preferredName"); 
-				this.universalfirstName = rs.getString("firstName");
-				return rs.getString("role");
+		try {
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(query); 
+			
+			//The main changes for random
+			
+			while(rs.next()) {
+				//big if determines if user is in and gives their role
+				if(rs.getString("email").equals(email) && rs.getString("password").equals(Password.hashFull(password,  rs.getString("random")))) {
+					this.universalpreferredName = rs.getString("preferredName"); 
+					this.universalfirstName = rs.getString("firstName");
+					return Roles.stringToArray(rs.getString("role"));
+				}
 			}
 		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
 		
-		return "";
+		return new String[] {};
 	}
 	
 	public String getFirstName() {
@@ -157,8 +202,57 @@ class DatabaseHelper {
 	public String getRole() {
 		return this.universalRole;
 	}
+	public String[] getRoles() {
+		return Roles.stringToArray(this.universalRole);
+	}
 	public String getpreferredName() {
 		return this.universalpreferredName;
+	}
+	
+	/**
+	 * Checks if an invite code is valid or not
+	 * @param invite
+	 * @throws SQLException
+	 */
+	public boolean validateInviteCode(String invite) {
+		try {
+			String sql = "SELECT * FROM invite"; 
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(sql); 
+	
+			while(rs.next()) {
+				if(rs.getString("invite").equals(Password.hash(invite))) {
+					return true;
+				}
+			}
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	/**
+	 * Returns the role of a given invite code
+	 * @param invite
+	 * @throws SQLException
+	 */
+	public String[] getInviteCodeRoles(String invite) {
+		try {
+			String sql = "SELECT * FROM invite"; 
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(sql); 
+	
+			while(rs.next()){
+				if(rs.getString("invite").equals(invite)) {
+					return Roles.stringToArray(rs.getString("role"));
+				}
+			}
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return new String[] {};
 	}
 	
 	//new invite functions
@@ -182,12 +276,14 @@ class DatabaseHelper {
 	}
 	
 	//new invite funcitons
-	public void addInviteUser(String invite, String role) throws SQLException{
+	public void addInviteUser(String invite, String[] roles) {
 		String insertUser = "INSERT INTO invite (invite, role) VALUES (?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)){
-			pstmt.setString(1, invite);
-			pstmt.setString(2, role);
+			pstmt.setString(1, Password.hash(invite));
+			pstmt.setString(2, Roles.ArrayToString(roles));
 			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 	}
 	

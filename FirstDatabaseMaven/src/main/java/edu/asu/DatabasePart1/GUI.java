@@ -8,6 +8,7 @@ import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
@@ -96,19 +97,24 @@ public class GUI extends Application {
 		Button loginButton = createButton(
 				(event) -> {
 					//Try logging in to the database and get the array of possible roles the user has
-					String[] roles = new String[] {"admin", "instructor"};
-					//databaseHelper.login(emailInput.getText(), passwordInput.getText());
+					String[] roles = databaseHelper.login(emailInput.getText(), passwordInput.getText());
 					if (roles.length > 0) {
 						setLoggingInPage(roles);
 					} else {//If there are no roles, the login failed and there was no login with those credentials
 						failCreateAccount(errorMessage, "Invalid email or password");
 					}
 				},
-			"Login", 15, 64, Pos.CENTER, 218, 190);
+			"Login", 15, 96, Pos.CENTER, 210, 190);
+		
+		Button createAccountButton = createButton(
+				(event) -> {
+					setCreateNewAccountPage();
+				},
+			"New User", 13, 64, Pos.CENTER, 218, 240);
 		
 		//Add all of the elements to the page
 		root.getChildren().addAll(title, emailTitle, emailInput, passwordTitle, passwordInput,
-				loginButton, errorMessage);
+				loginButton, createAccountButton, errorMessage);
 		
 		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
 		
@@ -201,6 +207,12 @@ public class GUI extends Application {
 		//The big title of the page
 		Label title = createLabel("HELLO, " + loginPreferredName, 30, 512, Pos.CENTER, 0, 0);
 		
+		Button generateCodeButton = createButton(
+				(event) -> {
+					setGenerateInviteCodePage();
+				},
+			"Generate Invite Code", 13, 96, Pos.CENTER, 202, 70);
+		
 		Button logoutButton = createButton(
 				(event) -> {
 					setLoginPage();
@@ -208,13 +220,81 @@ public class GUI extends Application {
 			"Logout", 15, 64, Pos.CENTER, 438, 10);
 		
 		//Add all of the elements to the page
-		root.getChildren().addAll(title, logoutButton, errorMessage);
+		root.getChildren().addAll(title, generateCodeButton, logoutButton, errorMessage);
 		
 		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
 		
 		appStage.setScene(scene);
 		
 		appStage.show();
+	}
+	
+	public static void setGenerateInviteCodePage() {
+		Pane root = new Pane();
+		
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 370);
+		errorMessage.setTextFill(Color.RED);
+		
+		//The big title of the page
+		Label title = createLabel("Generate Invite Code", 30, 512, Pos.CENTER, 0, 0);
+		
+		CheckBox adminRole = createCheckBox("Admin", 15, 96, Pos.CENTER, 202, 90);
+		
+		CheckBox instructorRole = createCheckBox("Instructor", 15, 96, Pos.CENTER, 202, 130);
+		
+		CheckBox studentRole = createCheckBox("Student", 15, 96, Pos.CENTER, 202, 170);
+		
+		TextField outputCode = createText("", 15, 96, Pos.CENTER, 202, 230);
+		
+		Button generateButton = createButton(
+				(event) -> {
+					int numRoles = 0;
+					if (adminRole.isSelected())
+						numRoles++;
+					if (instructorRole.isSelected())
+						numRoles++;
+					if (studentRole.isSelected())
+						numRoles++;
+					String[] roles = new String[numRoles];
+					numRoles = 0;
+					if (adminRole.isSelected()) {
+						roles[numRoles] = "admin";
+						numRoles++;
+					}
+					if (instructorRole.isSelected()) {
+						roles[numRoles] = "instructor";
+						numRoles++;
+					}
+					if (studentRole.isSelected()) {
+						roles[numRoles] = "student";
+						numRoles++;
+					}
+					generateInviteCode(roles, outputCode);
+				},
+			"Generate", 15, 96, Pos.CENTER, 202, 200);
+		
+		Button backButton = createButton(
+				(event) -> {
+					setAdminPage();
+				},
+			"Back", 15, 96, Pos.CENTER, 202, 490);
+		
+		//Add all of the elements to the page
+		root.getChildren().addAll(title, adminRole, instructorRole, studentRole,
+				backButton, generateButton, outputCode, errorMessage);
+		
+		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
+		
+		appStage.setScene(scene);
+		
+		appStage.show();
+	}
+	
+	private static void generateInviteCode(String[] roles, TextField codeText) {
+		String code = Password.generateRandomString(12);
+		databaseHelper.addInviteUser(code, roles);
+		
+		codeText.setText(code);
 	}
 	
 	/**
@@ -296,14 +376,14 @@ public class GUI extends Application {
 		Label codeTitle = createLabel("Invite Code:", 15, 512, Pos.CENTER, 0, 70);
 		TextField codeInput = createTextField("", 15, 256, Pos.CENTER, 128, 90);
 		
-		Label emailTitle = createLabel("Email:", 15, 512, Pos.CENTER, 0, 120);
-		TextField emailInput = createTextField("", 15, 256, Pos.CENTER, 128, 140);
+		Label emailTitle = createLabel("Email:", 15, 512, Pos.CENTER, 0, 70);
+		TextField emailInput = createTextField("", 15, 256, Pos.CENTER, 128, 90);
 		
-		Label passwordTitle = createLabel("Password:", 15, 512, Pos.CENTER, 0, 170);
-		TextField passwordInput = createPasswordField(15, 256, Pos.CENTER, 128, 190);
+		Label passwordTitle = createLabel("Password:", 15, 512, Pos.CENTER, 0, 120);
+		TextField passwordInput = createPasswordField(15, 256, Pos.CENTER, 128, 140);
 		
-		Label confirmPasswordTitle = createLabel("Confirm Password:", 15, 512, Pos.CENTER, 0, 220);
-		TextField confirmPasswordInput = createPasswordField(15, 256, Pos.CENTER, 128, 240);
+		Label confirmPasswordTitle = createLabel("Confirm Password:", 15, 512, Pos.CENTER, 0, 170);
+		TextField confirmPasswordInput = createPasswordField(15, 256, Pos.CENTER, 128, 190);
 		
 		Button createButton = createButton(
 				(event) -> {
@@ -314,7 +394,7 @@ public class GUI extends Application {
 							String inviteCode = codeInput.getText();
 							boolean validCode = databaseHelper.validateInviteCode(inviteCode);
 							if (validCode)
-								createAccount(emailInput.getText(), passwordInput.getText(), databaseHelper.getInviteCodeRole(inviteCode));
+								createAccount(emailInput.getText(), passwordInput.getText(), databaseHelper.getInviteCodeRoles(inviteCode));
 							else
 								failCreateAccount(errorMessage, "Invite code is INVALID!");
 						}
@@ -322,12 +402,20 @@ public class GUI extends Application {
 						failCreateAccount(errorMessage, "Passwords do NOT match!");
 					}
 				},
-			"Continue", 15, 64, Pos.CENTER, 218, 290);
+			"Continue", 15, 64, Pos.CENTER, 218, 240);
+		
+		Button backButton = createButton(
+				(event) -> {
+					setLoginPage();
+				},
+			"Back to Login", 13, 128, Pos.CENTER, 194, 290);
 		
 		if (!emptyDatabase)
-			root.getChildren().addAll(codeTitle, codeInput);
-		root.getChildren().addAll(title, emailTitle, emailInput, passwordTitle,
-				passwordInput, confirmPasswordTitle, confirmPasswordInput,
+			root.getChildren().addAll(codeTitle, codeInput, backButton);
+		else
+			root.getChildren().addAll(emailTitle, emailInput, passwordTitle,
+					passwordInput, confirmPasswordTitle, confirmPasswordInput);
+		root.getChildren().addAll(title,
 				createButton, errorMessage);
 		
 		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -338,12 +426,12 @@ public class GUI extends Application {
 	}
 	
 	private static void createFirstAdmin(String email, String password) {
-		databaseHelper.register(email, password, "admin");
+		databaseHelper.register(email, password, new String[]{"admin"});
 		setSetupAccountPage();
 	}
 	
-	private static void createAccount(String email, String password, String role) {
-		databaseHelper.register(email, password, role);
+	private static void createAccount(String email, String password, String[] roles) {
+		databaseHelper.register(email, password, roles);
 		setSetupAccountPage();
 	}
 	
@@ -501,5 +589,27 @@ public class GUI extends Application {
 		b.setLayoutY(y);
 		
 		return b;
+	}
+	
+	/**
+	 * Creates a text field for easy graphical design
+	 * @param defaultText
+	 * @param fontSize
+	 * @param width
+	 * @param position
+	 * @param x
+	 * @param y
+	 * @return
+	 */
+	private static CheckBox createCheckBox(String defaultText, double fontSize, double width, Pos position, double x, double y){
+		CheckBox t = new CheckBox(defaultText);
+		t.setSelected(false);
+		t.setFont(Font.font(FONT_NAME, fontSize));
+		t.setMinWidth(width);
+		t.setAlignment(position);
+		t.setLayoutX(x);
+		t.setLayoutY(y);
+		
+		return t;
 	}
 }
