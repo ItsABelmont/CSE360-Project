@@ -20,7 +20,7 @@ public class DatabaseHelperTestBed {
             return dbHelper.getConnection() != null; // This will only be evaluated if the connection succeeds
         });
 
-        // Insert a user into the database
+        // Insert a user into the database 
         performTestCase(2, "Insert User", () -> {
             dbHelper.register("testuser@example.com", "password123", "student");
             return dbHelper.doesUserExist("testuser@example.com", "student");
