@@ -17,20 +17,10 @@ public class StartCSE360 {
 	public static String email = "";
 	public static String password = "";
 
-	public static void main( String[] args )
+	public static void main( String[] args ) throws Exception
 	{
-		
-		try {
-			databaseHelper.connectToDatabase();
-		}
-		catch (SQLException e) {
-			System.err.println("Database error: " + e.getMessage());
-			e.printStackTrace();
-		}
-		
-		GUI.start(databaseHelper);
-		
-		/*try { 
+
+		try { 
 			int length = 8;
 			databaseHelper.connectToDatabase();  // Connect to the database
 			
@@ -45,31 +35,28 @@ public class StartCSE360 {
 				String choice = scanner.nextLine();
 
 				switch (choice) {
-				case "1":
+				
+				case "1": // checks invite code to see if it is valid and send it to database helper
 					System.out.println("Insert invite code.");
 					String choose = scanner.nextLine();
 					databaseHelper.inviteCode(choose);
-					
-//					if(choose.equals("1")) {
-//						setupAdmin();
-//					}
-//					else if(choose.equals("2")) {
-//						instructorFlow();
-//					}
-//					else {
-//						studentFlow();
-//					}
-					
 					break;
-				case "2":
+				case "2": // main log in function for the program
 					System.out.print("Enter Email: ");
 					String email2 = scanner.nextLine();
 					email = email2;
 					System.out.print("Enter Password: ");
 					String password2 = scanner.nextLine();
 					password = password2;
-					
-					userRole = Roles.ArrayToString(databaseHelper.login(email, password));
+					//checks if the user needs to reset their password and if so move 
+					//login with new password
+					String newPass = databaseHelper.doesUserReset(email2, password2);
+					System.out.println(newPass);
+					if(!newPass.equals("")) {
+						userRole = databaseHelper.login(email, newPass);
+					}
+					else
+						userRole = databaseHelper.login(email, password);
 					
 					//if a user has no roles than they do not exist and can not login
 					if (userRole.equals(""))
@@ -92,9 +79,10 @@ public class StartCSE360 {
 		finally {
 			System.out.println("Good Bye!!");
 			databaseHelper.closeConnection();
-		}*/
+		}
 	}
-
+	
+	//mainly sets up admin access for the first admin
 	private static void setupAdmin() throws SQLException {		//enhancement
 		System.out.println("Setting up the Admin access.");
 		System.out.print("Enter Admin Email: ");
@@ -103,6 +91,7 @@ public class StartCSE360 {
 		String password = scanner.nextLine();
 		String password2 = "";
 
+		//must insert passwords twice when registering
 		while(!password.equals(password2)) {
 			System.out.print("Please enter the password again");
 			password2 = scanner.nextLine();
@@ -123,7 +112,7 @@ public class StartCSE360 {
 
 	}
 	
-
+	//instructor registration may be able to delete
 	private static void instructorFlow() throws SQLException {		//enhancement
 		String email = null;
 		String password = null;
@@ -156,8 +145,10 @@ public class StartCSE360 {
 	
 	}
 	
+	//main things on what instructors can do just being able to logout
 	private static void instructorLogin() throws SQLException {		// enhancement 
 		
+		//checks if they need to finish their registration
 		if(!databaseHelper.getpreferredName().equals("placeholder")) {
 			System.out.println("Hello instructor " + databaseHelper.getpreferredName() + " What would you like to do?");
 		}
@@ -230,9 +221,10 @@ public class StartCSE360 {
 	    }
 	}
 	
-	//actually logins students
+	//actually logins students in
 	private static void studentLogin() throws SQLException {		// enhancement 
 		
+		//checks if the students must finish registration or not
 		if(!databaseHelper.getpreferredName().equals("placeholder")) {
 			System.out.println("Hello student " + databaseHelper.getpreferredName() + " What would you like to do?");
 		}
@@ -273,7 +265,8 @@ public class StartCSE360 {
 		
 	}
 	
-	private static void adminFlow() throws SQLException {
+	//all of the admin capabilities and stuff
+	private static void adminFlow() throws Exception {
        //just test thingie databaseHelper.displayUsersByAdmin();
 		if(!databaseHelper.getpreferredName().equals("placeholder")) {
 			System.out.println("Hello " + databaseHelper.getpreferredName() + " What would you like to do?");
@@ -307,7 +300,7 @@ public class StartCSE360 {
 		}
 		
 		while(true) {
-		System.out.println("1. Print Users\n2. Delete User\n3. Add user role\n4. Remove user role\n5. Generate Invite Code\n6. Logout");
+		System.out.println("1. Print Users\n2. Delete User\n3. Add user role\n4. Remove user role\n5. Generate Invite Code\n6. Reset User Account\n7. Article stuff\n logout");
 		String choice = scanner.nextLine();
 			if(choice.equals("1"))
 				databaseHelper.displayUsersByAdmin();
@@ -337,7 +330,70 @@ public class StartCSE360 {
 			}
 			else if(choice.equals("5"))
 				generateInviteCode();
-			else if(choice.equals("6"))
+			else if(choice.equals("6")) {
+				System.out.println("Choose a user to reset their password\n");
+				String email = scanner.nextLine();
+				String pass = Password.generateRandomString(8);
+				System.out.println(pass);
+				databaseHelper.passwordReset(email, pass);
+			}
+			else if(choice.equals("7")){
+				while(true) {
+					System.out.println("\n1. Display Articles\n2. See article\n3. Add article\n4. Delete article\n5. Backup\n6. Restore\n7. Merge\n8. Logout");
+					choice = scanner.nextLine();
+					if(choice.equals("1")){
+						databaseHelper.displayArticleByAdmin();
+					}
+					else if(choice.equals("2")) {
+						System.out.println("Please choose an article id to see");
+						choice = scanner.nextLine();
+						databaseHelper.seeArticle(Integer.parseInt(choice));
+					}
+					else if(choice.equals("3")) {
+						System.out.println("Choose Title: ");
+						String title = scanner.nextLine();
+						System.out.println("Choose Authors: ");
+						String author = scanner.nextLine();
+						System.out.println("Choose Abstract: ");
+						String abstrac = scanner.nextLine();
+						System.out.println("Choose Keywords: ");
+						String keywords = scanner.nextLine();
+						System.out.println("Choose Body: ");
+						String body = scanner.nextLine();
+						System.out.println("Choose References: ");
+						String references = scanner.nextLine();
+						databaseHelper.addArticle(title, author, abstrac, keywords, body, references);		
+					}
+					else if(choice.equals("4")) {
+						System.out.println("Insert and articles ID number to delete: ");
+						String delete = scanner.nextLine();
+						databaseHelper.deleteArticle(Integer.parseInt(delete));
+					}
+					else if(choice.equals("5")) {
+						System.out.println("Insert File Name");
+						choice = scanner.nextLine();
+						databaseHelper.backupArticles(choice);
+					}
+					else if(choice.equals("6")) {
+						System.out.println("Insert File Name");
+						choice = scanner.nextLine();
+						databaseHelper.restoreArticles(choice);
+					}
+					else if(choice.equals("7")) {
+						System.out.println("Insert File Name");
+						choice = scanner.nextLine();
+						databaseHelper.mergeArticles(choice);
+					}
+					else if(choice.equals("8")) {
+						return;
+					}
+					else {
+						System.out.println("Invalid choice.");
+						databaseHelper.closeConnection();
+					}
+				}
+			}
+			else if(choice.equals("8"))
 				return;
 			else
 				System.out.println("Not valid choose a number");
@@ -351,7 +407,7 @@ public class StartCSE360 {
 	
 	public static void generateInviteCode() {
 		String role = "";
-		int length = 12;
+		int length = 8;
 		
 		System.out.println("What role would you like the user to have?");
 		System.out.println("1. Admin\n2.Instructor\n3.Student");
@@ -365,16 +421,21 @@ public class StartCSE360 {
 		else 
 			role = "student";
 		
-		String invite = Password.generateRandomString(length);
+		String invite = hashPassword.hash(hashPassword.generateRandomString(length));
 		System.out.println("Here is the invite code.");
 		System.out.println(invite);
-		
-		databaseHelper.addInviteUser(invite, new String[] {role});
+		try {
+			databaseHelper.addInviteUser(invite, role);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 
 		
 	}
 	
-	public static void checkRoles() {
+	//all this function does is check if the user has multiple roles and if so what roles 
+	//they would like to login as
+	public static void checkRoles() throws Exception {
 		
 		String[] arr = userRole.split(",", 0);
 		
