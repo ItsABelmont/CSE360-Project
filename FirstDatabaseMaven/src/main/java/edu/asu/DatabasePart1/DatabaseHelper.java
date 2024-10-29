@@ -525,6 +525,30 @@ class DatabaseHelper {
 	}
 	
 	/**
+	 * Returns true if the user needs to setup their name information
+	 * @param email
+	 * @return
+	 */
+	public boolean checkFinish(String email) {
+		try {
+			String sql = "SELECT * FROM cse360users";
+			Statement stmt = connection.createStatement();
+			
+			ResultSet rs = stmt.executeQuery(sql);
+			
+			while(rs.next()) {
+				if (rs.getString("firstName").equals("placeholder") && rs.getString("email").equals(email)) {
+					return true;
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return false;
+	}
+	
+	/**
 	 * Writes the remaining data to the database
 	 * @param email
 	 * @param first
@@ -894,6 +918,7 @@ class DatabaseHelper {
 	 * Ends the connection to the database
 	 */
 	public void closeConnection() {
+		System.out.println("Closing connection...");
 		try{ 
 			if(statement!=null) statement.close(); 
 		} catch(SQLException se2) { 

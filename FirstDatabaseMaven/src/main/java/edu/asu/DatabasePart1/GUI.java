@@ -103,7 +103,7 @@ public class GUI extends Application {
 					String[] roles = databaseHelper.login(emailInput.getText(), passwordInput.getText());
 					if (roles.length > 0) {
 						currentEmail = emailInput.getText();
-						if (databaseHelper.shouldUserReset(currentEmail)) {
+						if (databaseHelper.shouldUserReset(currentEmail) || databaseHelper.checkFinish(currentEmail)) {
 							setSetupAccountPage();
 						}
 						else
@@ -214,7 +214,7 @@ public class GUI extends Application {
 	public static void setAdminPage() {
 		Pane root = new Pane();
 		
-		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 170);
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 270);
 		errorMessage.setTextFill(Color.RED);
 		
 		//The big title of the page
@@ -234,6 +234,13 @@ public class GUI extends Application {
 				},
 			"List Users", 13, 158, Pos.CENTER, 180, 120);
 		
+		//Go to the article page
+		Button articlesButton = createButton(
+				(event) -> {
+					setArticleAdminPage();
+				},
+			"Articles", 13, 158, Pos.CENTER, 180, 170);
+		
 		//Logout button
 		Button logoutButton = createButton(
 				(event) -> {
@@ -242,7 +249,64 @@ public class GUI extends Application {
 			"Logout", 15, 64, Pos.CENTER, 438, 10);
 		
 		//Add all of the elements to the page
-		root.getChildren().addAll(title, generateCodeButton, listUsersButton, logoutButton, errorMessage);
+		root.getChildren().addAll(title, generateCodeButton, listUsersButton, articlesButton, logoutButton, errorMessage);
+		
+		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
+		
+		appStage.setScene(scene);
+		
+		appStage.show();
+	}
+	
+	/**
+	 * Creates the page for admins to interact with the article database
+	 */
+	public static void setArticleAdminPage() {
+		Pane root = new Pane();
+		
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 270);
+		errorMessage.setTextFill(Color.RED);
+		
+		//The big title of the page
+		Label title = createLabel("Article System", 30, 512, Pos.CENTER, 0, 0);
+		
+		//Create a new article
+		Button createButton = createButton(
+				(event) -> {
+					//setGenerateInviteCodePage();
+				},
+			"Create Article", 13, 158, Pos.CENTER, 180, 70);
+		
+		//Update an article's info
+		Button updateButton = createButton(
+				(event) -> {
+					
+				},
+			"Update Article", 13, 158, Pos.CENTER, 180, 110);
+		
+		//View an article
+		Button viewButton = createButton(
+				(event) -> {
+					//setArticleAdminPage();
+				},
+			"View Article", 13, 158, Pos.CENTER, 180, 150);
+		
+		//Delete an article
+		Button deleteButton = createButton(
+				(event) -> {
+					//setArticleAdminPage();
+				},
+			"Delete Article", 13, 158, Pos.CENTER, 180, 190);
+		
+		//Logout button
+		Button backButton = createButton(
+				(event) -> {
+					setAdminPage();
+				},
+			"Back", 15, 64, Pos.CENTER, 428, 40);
+		
+		//Add all of the elements to the page
+		root.getChildren().addAll(title, createButton, updateButton, viewButton, deleteButton, backButton, errorMessage);
 		
 		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
 		
@@ -495,6 +559,13 @@ public class GUI extends Application {
 		//The big title of the page
 		Label title = createLabel("HELLO, " + loginPreferredName, 30, 512, Pos.CENTER, 0, 0);
 		
+		//Go to the article page
+		Button articlesButton = createButton(
+				(event) -> {
+					//setArticleInstructorPage();
+				},
+			"Articles", 13, 158, Pos.CENTER, 180, 70);
+		
 		Button logoutButton = createButton(
 				(event) -> {
 					setLoginPage();
@@ -502,7 +573,7 @@ public class GUI extends Application {
 			"Logout", 15, 64, Pos.CENTER, 438, 10);
 		
 		//Add all of the elements to the page
-		root.getChildren().addAll(title, logoutButton, errorMessage);
+		root.getChildren().addAll(title, logoutButton, articlesButton, errorMessage);
 		
 		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
 		

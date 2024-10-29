@@ -30,6 +30,10 @@ public class StartCSE360 {
 		
 		GUI.start(databaseHelper);
 		
+		databaseHelper.closeConnection();
+		
+		System.exit(0);
+		
 		/*try { 
 			int length = 8;
 			databaseHelper.connectToDatabase();  // Connect to the database
