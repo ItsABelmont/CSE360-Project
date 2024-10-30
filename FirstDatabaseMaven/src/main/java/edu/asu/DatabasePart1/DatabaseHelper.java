@@ -10,16 +10,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-
-/////
 /**
  * </p> DatabaseHelper Class </p>
  * 
- * Description: This class allows user registration, login, and other administration functionalities 
+ * </p> Description: This class allows user registration, login, and other administration functionalities </p>
  * 
- * @authors Lynn Robert Carter - Blake Thilbin - Just Wise
+ * @authors Lynn Robert Carter - Blake Philbin - Just Wise
  * 
- * @version 1.0	2024-10-9	An implementation of user registration and login features
+ * @version 1.00	2024-10-09	An implementation of user registration and login features
+ * @version 1.1		2024-10-29	An implementation of article methods restore and backup
+ * 
  */
 class DatabaseHelper {
 

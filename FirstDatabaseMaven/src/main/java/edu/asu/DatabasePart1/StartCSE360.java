@@ -8,6 +8,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
+/**
+ * <p> StartCSE360 Class </p>
+ * 
+ * <p> Description: This Java class is the entry point into the program </p>
+ * 
+ * @authors Lynn Robert Carter - Blake Philbin - Just Wise - Reem Helal
+ * 
+ * @version 1.00  2024-10-08  Initial creation of the file
+ * 
+ */
+
 public class StartCSE360 {
 
 	private static final DatabaseHelper databaseHelper = new DatabaseHelper();
@@ -98,7 +109,10 @@ public class StartCSE360 {
 			databaseHelper.closeConnection();
 		}*/
 	}
-
+	
+	/** Sets up admin account by prompting for email and password, ensuring they match, and registering the admin 
+	 * @throws SQLException 
+	 */
 	private static void setupAdmin() throws SQLException {		//enhancement
 		System.out.println("Setting up the Admin access.");
 		System.out.print("Enter Admin Email: ");
@@ -127,7 +141,9 @@ public class StartCSE360 {
 
 	}
 	
-
+	/** Handles instructor account by prompting for email, password, and account registration 
+	 * @throws SQLException
+	 */
 	private static void instructorFlow() throws SQLException {		//enhancement
 		String email = null;
 		String password = null;
@@ -160,6 +176,9 @@ public class StartCSE360 {
 	
 	}
 	
+	/** Handles instructor login and account setup by prompting for first, middle, last and preferred names
+	 * @throws SQLException
+	 */
 	private static void instructorLogin() throws SQLException {		// enhancement 
 		
 		if(!databaseHelper.getpreferredName().equals("placeholder")) {
@@ -181,7 +200,7 @@ public class StartCSE360 {
 			System.out.println("Do you have a preferred name? Y/N");
 			String yn = scanner.nextLine();
 			if(yn.equals("Y")) {
-				System.out.println("Insert prefered: ");
+				System.out.println("Insert preferred: ");
 				
 				preferred = scanner.nextLine();					
 			}
@@ -202,7 +221,9 @@ public class StartCSE360 {
 		
 	}
 	
-	//registers students
+	/** Handles student account by prompting for e-mail, password, password confirmation, and account registration
+	 * @throws SQLException
+	 */
 	private static void studentFlow() throws SQLException {		// enhancement 
 		String email = null;
 		String password = null;
@@ -234,7 +255,9 @@ public class StartCSE360 {
 	    }
 	}
 	
-	//actually logins students
+	/** Handles student login and account setup by prompting for first, middle, last and preferred names
+	 * @throws SQLException
+	 */
 	private static void studentLogin() throws SQLException {		// enhancement 
 		
 		if(!databaseHelper.getpreferredName().equals("placeholder")) {
@@ -256,7 +279,7 @@ public class StartCSE360 {
 			System.out.println("Do you have a preferred name? Y/N");
 			String yn = scanner.nextLine();
 			if(yn.equals("Y")) {
-				System.out.println("Insert prefered: ");
+				System.out.println("Insert preferred: ");
 				
 				preferred = scanner.nextLine();					
 			}
@@ -277,6 +300,9 @@ public class StartCSE360 {
 		
 	}
 	
+	/** Handles admin account setup and management, and prompts for first, middle, last and preferred names 
+	 * @throws SQLException
+	 */
 	private static void adminFlow() throws SQLException {
        //just test thingie databaseHelper.displayUsersByAdmin();
 		if(!databaseHelper.getpreferredName().equals("placeholder")) {
@@ -298,7 +324,7 @@ public class StartCSE360 {
 			System.out.println("Do you have a preferred name? Y/N");
 			String yn = scanner.nextLine();
 			if(yn.equals("Y")) {
-				System.out.println("Insert prefered: ");
+				System.out.println("Insert preferred: ");
 				
 				preferred = scanner.nextLine();					
 			}
@@ -348,11 +374,7 @@ public class StartCSE360 {
 		}
 	}
 	
-	//makes random strings for new hashs
-
-	
-	//add random string to end of the password
-	
+	/** Creates random strings for new hashes and adds random string to end of the password */
 	public static void generateInviteCode() {
 		String role = "";
 		int length = 12;
@@ -378,6 +400,7 @@ public class StartCSE360 {
 		
 	}
 	
+	/** Checks user roles and redirects them to either admin, instructor or student login flow */
 	public static void checkRoles() {
 		
 		String[] arr = userRole.split(",", 0);
