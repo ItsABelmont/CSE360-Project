@@ -24,10 +24,15 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 /**
- * This class contains the definition for the graphical interface
+ * </p> GUI Class </p>
+ * 
+ * </p> Description: This class contains the definition for the graphical interface </p>
  * 
  * @author Just Wise
  *
+ * @version 1.00	2024-10-9	Functions defining use cases for system login
+ * @version 1.1		2024-10-29  Functions defining use cases for article management 
+ * 
  */
 public class GUI extends Application {
 	

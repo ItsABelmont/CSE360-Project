@@ -1,9 +1,14 @@
 package edu.asu.DatabasePart1;
 
 /**
- * A class for holding all the information of an article
+ * </p> Article Class </p>
+ * 
+ * </p> Description: A class for holding all the information of an article </p>
+ * 
  * @author Just Wise
  *
+ * @version 1.00	2024-10-29	This class contains article functionality
+ * 
  */
 public class Article {
 	//Every piece of article information is contained in these variables
