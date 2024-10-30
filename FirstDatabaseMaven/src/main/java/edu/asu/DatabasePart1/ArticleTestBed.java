@@ -29,8 +29,8 @@ public class ArticleTestBed {
 
 			// Test adding an article
 			performTestCase(1, "Add Article", () -> {
-				return dbHelper.addArticle("Test Title", "Test Group", "Author1, Author2", 
-						"Test Abstract", "Test Keywords", "Test Body", "Test References");
+				return dbHelper.addArticle("TestTitle", "TestGroup", "Author1,Author2", 
+						"TestAbstract", "TestKeywords", "TestBody", "TestReferences");
 			});
 			
 			// Test updating an article
