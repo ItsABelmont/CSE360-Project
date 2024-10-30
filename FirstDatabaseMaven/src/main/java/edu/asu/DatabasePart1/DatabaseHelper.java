@@ -922,27 +922,33 @@ class DatabaseHelper {
 	}
 	
 	//adds a new article
-	public boolean addArticle(String title, String group, String authors, String abstrac, String keywords, String body, String references) throws Exception{
-		//random unique long can change right limit for longer long
-		Random random = new Random();
-        long leftLimit = 1L;
-        long rightLimit = 10000000L;
-        long randomLong = leftLimit + (long) (random.nextDouble() * (rightLimit - leftLimit));
-		String insertUser = "INSERT INTO  articles (id, title, groupName, authors, abstract, keywords, body, references, delete) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
-			pstmt.setLong(1, randomLong);
-			pstmt.setString(2, title);
-			pstmt.setString(3, group);
-			pstmt.setString(4, authors);
-			pstmt.setString(5, abstrac);
-			pstmt.setString(6, keywords);
-			pstmt.setString(7, body);
-			pstmt.setString(8, references);
-			pstmt.setString(9, "f");
-			pstmt.executeUpdate();
+	public boolean addArticle(String title, String group, String authors, String abstrac, String keywords, String body, String references) {
+		try {
+			//random unique long can change right limit for longer long
+			Random random = new Random();
+	        long leftLimit = 1L;
+	        long rightLimit = 10000000L;
+	        long randomLong = leftLimit + (long) (random.nextDouble() * (rightLimit - leftLimit));
+			String insertUser = "INSERT INTO  articles (id, title, groupName, authors, abstract, keywords, body, references, delete) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+			try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
+				pstmt.setLong(1, randomLong);
+				pstmt.setString(2, title);
+				pstmt.setString(3, group);
+				pstmt.setString(4, authors);
+				pstmt.setString(5, abstrac);
+				pstmt.setString(6, keywords);
+				pstmt.setString(7, body);
+				pstmt.setString(8, references);
+				pstmt.setString(9, "f");
+				pstmt.executeUpdate();
+			}
+			
+			return true;
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 		
-		return true;
+		return false;
 	}
 	//deletes articles
 	public void deleteArticle(int id) throws Exception{
@@ -1025,7 +1031,7 @@ class DatabaseHelper {
 			System.out.println(", Abstract: " + abstrac); 
 			System.out.print("keywords: " + keywords);
 			System.out.print(" Encrypted body: " + encryptedBody);
-			System.out.println("\nReferences: " + references); 
+			System.out.println("\nReferences: " + references);
 			}
 		} 
 	}
@@ -1038,14 +1044,14 @@ class DatabaseHelper {
 	
 	        try (FileWriter writer = new FileWriter(filename)) {
 	            while (rs.next()) {
-	                String data = rs.getLong("id") + "," +
-	                			  rs.getString("title") + "," +
-	                			  rs.getString("groupName") + "," +//each line gets added to the backup
-	                              rs.getString("authors") + "," +
-	                              rs.getString("abstract") + "," +
-	                              rs.getString("keywords") + "," +
-	                              rs.getString("body") + "," +
-	                              rs.getString("references") + "," +
+	                String data = rs.getLong("id") + "+" +
+	                			  rs.getString("title") + "+" +
+	                			  rs.getString("groupName") + "+" +//each line gets added to the backup
+	                              rs.getString("authors") + "+" +
+	                              rs.getString("abstract") + "+" +
+	                              rs.getString("keywords") + "+" +
+	                              rs.getString("body") + "+" +
+	                              rs.getString("references") + "+" +
 	                              rs.getString("delete");
 	                writer.write(data + "\n");
 	            }
@@ -1068,14 +1074,14 @@ class DatabaseHelper {
 	            while (rs.next()) {
 	            	if(rs.getString("groupName").equals(group)) {
 	            		outputValid = true;
-	            		String data = rs.getLong("id") + "," +
-	            					  rs.getString("title") + "," +
-	            					  rs.getString("groupName") + "," +//each line gets added to the backup
-	            					  rs.getString("authors") + "," +
-	            					  rs.getString("abstract") + "," +
-	            					  rs.getString("keywords") + "," +
-	            					  rs.getString("body") + "," +
-	            					  rs.getString("references") + "," +
+	            		String data = rs.getLong("id") + "+" +
+	            					  rs.getString("title") + "+" +
+	            					  rs.getString("groupName") + "+" +//each line gets added to the backup
+	            					  rs.getString("authors") + "+" +
+	            					  rs.getString("abstract") + "+" +
+	            					  rs.getString("keywords") + "+" +
+	            					  rs.getString("body") + "+" +
+	            					  rs.getString("references") + "+" +
 	            					  rs.getString("delete");
 	            		writer.write(data + "\n");
 	            	}
@@ -1092,42 +1098,51 @@ class DatabaseHelper {
 	}
 	
 	//merges instead of deleting all of the new articles
-	public void mergeArticles(String filename) throws Exception{		    // Prepare SQL statements
-	    String updateQuery = "UPDATE articles SET title = ?, groupName = ?, authors = ?, abstract = ?, keywords = ?, body = ?, references = ?, delete = ? WHERE id = ?";
-	    String insertQuery = "INSERT INTO articles (id, title, groupName, authors, abstract, keywords, body, references, delete) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	public boolean mergeArticles(String filename) {
+		try {
+			// Prepare SQL statements
+		    String updateQuery = "UPDATE articles SET title = ?, groupName = ?, authors = ?, abstract = ?, keywords = ?, body = ?, references = ?, delete = ? WHERE id = ?";
+		    String insertQuery = "INSERT INTO articles (id, title, groupName, authors, abstract, keywords, body, references, delete) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+		    
+		    PreparedStatement updatePstmt = connection.prepareStatement(updateQuery);
+		    PreparedStatement insertPstmt = connection.prepareStatement(insertQuery);
+	
+		    try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+		        String line;
+		        while ((line = reader.readLine()) != null) {
+		            String[] values = line.split("+");
+		            if (values.length == 9) {
+		                // Set parameters for update statement
+		                for (int i = 1; i < 9; i++) {
+		                    updatePstmt.setString(i, values[i]);
+		                }
+		                updatePstmt.setString(9, values[0]); // id is the last parameter
+		                int affectedRows = updatePstmt.executeUpdate();
+	
+		                // If no rows were affected by update, insert new row
+		                if (affectedRows == 0) {
+		                    for (int i = 0; i < 9; i++) {
+		                        insertPstmt.setString(i + 1, values[i]);
+		                    }
+		                    insertPstmt.executeUpdate();
+		                }
+		            } else {
+		                System.err.println("Skipping line due to incorrect number of values: " + line);
+		            }
+		        }
+		    } 
+		    return true;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	    
-	    PreparedStatement updatePstmt = connection.prepareStatement(updateQuery);
-	    PreparedStatement insertPstmt = connection.prepareStatement(insertQuery);
-
-	    try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
-	        String line;
-	        while ((line = reader.readLine()) != null) {
-	            String[] values = line.split(",");
-	            if (values.length == 9) {
-	                // Set parameters for update statement
-	                for (int i = 1; i < 9; i++) {
-	                    updatePstmt.setString(i, values[i]);
-	                }
-	                updatePstmt.setString(9, values[0]); // id is the last parameter
-	                int affectedRows = updatePstmt.executeUpdate();
-
-	                // If no rows were affected by update, insert new row
-	                if (affectedRows == 0) {
-	                    for (int i = 0; i < 9; i++) {
-	                        insertPstmt.setString(i + 1, values[i]);
-	                    }
-	                    insertPstmt.executeUpdate();
-	                }
-	            } else {
-	                System.err.println("Skipping line due to incorrect number of values: " + line);
-	            }
-	        }
-	    } 
-
+	    return false;
 	}
 	
 	//restores articles depending on the file name
-	public void restoreArticles(String filename) {
+	public boolean restoreArticles(String filename) {
 		try {
 			//empties table as is required to back it up
 			String query = "TRUNCATE TABLE articles";
@@ -1140,7 +1155,7 @@ class DatabaseHelper {
 	        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
 	            String line;
 	            while ((line = reader.readLine()) != null) {
-	                String[] values = line.split(",");
+	                String[] values = line.split("+");
 	                if (values.length == 9) {
 	                    for (int i = 0; i < 9; i++) {
 	                        pstmt.setString(i + 1, values[i]); //reads through the lines adding back to the table
@@ -1151,11 +1166,13 @@ class DatabaseHelper {
 	                }
 	            }
 	        } 
+	        return true;
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		return false;
 	}
 	
 	

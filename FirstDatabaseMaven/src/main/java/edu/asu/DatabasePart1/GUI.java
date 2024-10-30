@@ -14,6 +14,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
@@ -369,30 +370,28 @@ public class GUI extends Application {
 					File file = fileNameChooser.showOpenDialog(appStage);
 					fileNameImported.setText(file.getName());
 				},
-				"Backup Whole System", 13, 158, Pos.CENTER, 180, 170);
+				"Select file", 13, 158, Pos.CENTER, 180, 160);
 		
-		//Backs up the whole article system to a file
+		CheckBox mergeArticles = createCheckBox("Merge articles with preexisting database\n(no checkmark will replace the database with the file)", 15, 96, Pos.CENTER, 110, 190);
+		
+		//Restores the system from a button click
 		Button wholeSystemButton = createButton(
 				(event) -> {
-					databaseHelper.restoreArticles(fileNameImported.getText());
-					//File file = fileNameField.showOpenDialog();
-				},
-				"Backup Whole System", 13, 158, Pos.CENTER, 180, 170);
-		
-		//Update an article's info
-		Button groupButton = createButton(
-				(event) -> {
-					/*String group = groupField.getText();
-					String file = fileNameField.getText();
-					if (group.equals("") || file.equals("")) {
-						errorMessage.setText("Group and file must have a name!");
-					} else {
-						if (!databaseHelper.groupBackupArticles(file, group)) {
-							errorMessage.setText("Group name \"" + group + "\" does not exist!");
+					if (!fileNameImported.getText().equals("")) {
+						boolean success;
+						if (mergeArticles.isSelected()) {
+							success = databaseHelper.restoreArticles(fileNameImported.getText());
+						} else {
+							success = databaseHelper.mergeArticles(fileNameImported.getText());
 						}
-					}*/
+						if (!success) {
+							errorMessage.setText("File does not exist!");
+						}
+					} else {
+						errorMessage.setText("Must select a file to restore from");
+					}
 				},
-			"Backup Group", 13, 158, Pos.CENTER, 180, 220);
+				"Restore from file", 13, 158, Pos.CENTER, 180, 250);
 		
 		//Back button
 		Button backButton;
@@ -413,7 +412,7 @@ public class GUI extends Application {
 		}
 		
 		//Add all of the elements to the page
-		root.getChildren().addAll(title, fileName, fileNameField, wholeSystemButton, groupButton, backButton, errorMessage);
+		root.getChildren().addAll(title, fileName, fileNameImported, fileNameField, mergeArticles, wholeSystemButton, backButton, errorMessage);
 		
 		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
 		
@@ -437,7 +436,7 @@ public class GUI extends Application {
 		//Create a new article
 		Button createButton = createButton(
 				(event) -> {
-					//setGenerateInviteCodePage();
+					setCreateArticlePage(type);
 				},
 			"Create Article", 13, 158, Pos.CENTER, 180, 70);
 		
@@ -483,6 +482,75 @@ public class GUI extends Application {
 		root.getChildren().addAll(title, createButton, updateButton, viewButton, deleteButton, backButton, errorMessage);
 		
 		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
+		
+		appStage.setScene(scene);
+		
+		appStage.show();
+	}
+	
+	public static void setCreateArticlePage(String type) {
+		Pane root = new Pane();
+		
+		ScrollPane scrollPane = new ScrollPane();
+		scrollPane.setContent(root);
+		
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 560);
+		errorMessage.setTextFill(Color.RED);
+		
+		//The big title of the page
+		Label title = createLabel("Create Article", 30, 512, Pos.CENTER, 0, 0);
+		
+		Label titleName = createLabel("Title:", 12, 512, Pos.CENTER, 0, 40);
+		TextField titleNameField = createTextField("", 15, 512, Pos.CENTER, 0, 55);
+		
+		Label groupName = createLabel("Group:", 12, 512, Pos.CENTER, 0, 90);
+		TextField groupNameField = createTextField("", 15, 512, Pos.CENTER, 0, 105);
+		
+		Label authorsName = createLabel("Authors:", 12, 512, Pos.CENTER, 0, 130);
+		TextField authorsNameField = createTextField("", 15, 512, Pos.CENTER, 0, 145);
+		
+		Label abstractName = createLabel("Abstract:", 12, 512, Pos.CENTER, 0, 170);
+		TextField abstractNameField = createTextField("", 15, 512, Pos.CENTER, 0, 185);
+		
+		Label keywordsName = createLabel("Keywords:", 12, 512, Pos.CENTER, 0, 210);
+		TextField keywordsNameField = createTextField("", 15, 512, Pos.CENTER, 0, 225);
+		
+		Label bodyName = createLabel("Body:", 12, 512, Pos.CENTER, 0, 250);
+		TextArea bodyNameField = createTextArea("", 15, 312, true, 0, 270);
+		bodyNameField.setMaxWidth(512);
+		bodyNameField.setMinHeight(70);
+		
+		Label referencesName = createLabel("References:", 12, 512, Pos.CENTER, 0, 480);
+		TextField referencesNameField = createTextField("", 15, 512, Pos.CENTER, 0, 495);
+		
+		
+		//Restores the system from a button click
+		Button createButton = createButton(
+				(event) -> {
+					if (databaseHelper.addArticle(titleNameField.getText(), groupNameField.getText(), authorsNameField.getText(), abstractNameField.getText(), keywordsNameField.getText(), bodyNameField.getText(), referencesNameField.getText())) {
+						setArticleModPage(type);
+					} else {
+						errorMessage.setText("Error creating article");
+					}
+				},
+				"Create article", 13, 158, Pos.CENTER, 180, 530);
+		
+		//Back button
+		Button backButton;
+		backButton = createButton(
+				(event) -> {
+					setArticleModPage(type);
+				},
+				"Back", 15, 64, Pos.CENTER, 428, 20);
+		
+		//Add all of the elements to the page
+		root.getChildren().addAll(title, titleName, titleNameField, groupName, 
+				groupNameField, authorsName, authorsNameField, abstractName, abstractNameField, 
+				keywordsName, keywordsNameField, bodyName, bodyNameField, 
+				referencesName, referencesNameField, 
+				createButton, backButton, errorMessage);
+		
+		Scene scene = new Scene(scrollPane, WINDOW_WIDTH, WINDOW_HEIGHT);
 		
 		appStage.setScene(scene);
 		
@@ -1026,6 +1094,28 @@ public class GUI extends Application {
 		t.setFont(Font.font(FONT_NAME, fontSize));
 		t.setMinWidth(width);
 		t.setAlignment(position);
+		t.setLayoutX(x);
+		t.setLayoutY(y);		
+		t.setEditable(true);
+		
+		return t;
+	}
+	
+	/**
+	 * Creates an editable text field for easy graphical design
+	 * @param defaultText
+	 * @param fontSize
+	 * @param width
+	 * @param position
+	 * @param x
+	 * @param y
+	 * @return
+	 */
+	private static TextArea createTextArea(String defaultText, double fontSize, double width, boolean wrap, double x, double y){
+		TextArea t = new TextArea(defaultText);
+		t.setFont(Font.font(FONT_NAME, fontSize));
+		t.setMinWidth(width);
+		t.setWrapText(wrap);
 		t.setLayoutX(x);
 		t.setLayoutY(y);		
 		t.setEditable(true);
