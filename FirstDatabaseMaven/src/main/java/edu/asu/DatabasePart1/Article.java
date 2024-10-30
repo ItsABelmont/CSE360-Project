@@ -7,7 +7,7 @@ package edu.asu.DatabasePart1;
  */
 public class Article {
 	//Every piece of article information is contained in these variables
-	public int id;
+	public long id;
 	String title; 
 	String group;
 	String authors;  
@@ -27,7 +27,7 @@ public class Article {
 	 * @param body
 	 * @param references
 	 */
-	public Article(int id, String title, String group, String authors, String abstrac, String keywords, String body, String references) {
+	public Article(long id, String title, String group, String authors, String abstrac, String keywords, String body, String references) {
 		this.id = id;
 		this.title = title;
 		this.group = group;

@@ -34,6 +34,8 @@ public class GUI extends Application {
 	private static Stage appStage;
 	private static DatabaseHelper databaseHelper;
 	
+	private static int numGroups;
+	
 	public static String loginPreferredName;
 	public static String currentEmail;
 	
@@ -301,6 +303,11 @@ public class GUI extends Application {
 						errorMessage.setText("File must have a name!");
 					} else {
 						databaseHelper.backupArticles(fileNameField.getText());
+						if (type.equals("admin"))
+							setAdminPage();
+						else if (type.equals("instructor"))
+							setInstructorPage();
+						else setStudentPage();
 					}
 				},
 				"Backup Whole System", 13, 158, Pos.CENTER, 180, 170);
@@ -315,6 +322,12 @@ public class GUI extends Application {
 					} else {
 						if (!databaseHelper.groupBackupArticles(file, group)) {
 							errorMessage.setText("Group name \"" + group + "\" does not exist!");
+						} else {
+							if (type.equals("admin"))
+								setAdminPage();
+							else if (type.equals("instructor"))
+								setInstructorPage();
+							else setStudentPage();
 						}
 					}
 				},
@@ -373,19 +386,26 @@ public class GUI extends Application {
 				"Select file", 13, 158, Pos.CENTER, 180, 160);
 		
 		CheckBox mergeArticles = createCheckBox("Merge articles with preexisting database\n(no checkmark will replace the database with the file)", 15, 96, Pos.CENTER, 110, 190);
+		mergeArticles.setSelected(true);
 		
 		//Restores the system from a button click
 		Button wholeSystemButton = createButton(
 				(event) -> {
 					if (!fileNameImported.getText().equals("")) {
 						boolean success;
-						if (mergeArticles.isSelected()) {
+						if (!mergeArticles.isSelected()) {
 							success = databaseHelper.restoreArticles(fileNameImported.getText());
 						} else {
 							success = databaseHelper.mergeArticles(fileNameImported.getText());
 						}
 						if (!success) {
 							errorMessage.setText("File does not exist!");
+						} else {
+							if (type.equals("admin"))
+								setAdminPage();
+							else if (type.equals("instructor"))
+								setInstructorPage();
+							else setStudentPage();
 						}
 					} else {
 						errorMessage.setText("Must select a file to restore from");
@@ -440,26 +460,12 @@ public class GUI extends Application {
 				},
 			"Create Article", 13, 158, Pos.CENTER, 180, 70);
 		
-		//Update an article's info
-		Button updateButton = createButton(
-				(event) -> {
-					
-				},
-			"Update Article", 13, 158, Pos.CENTER, 180, 110);
-		
 		//View an article
 		Button viewButton = createButton(
 				(event) -> {
-					//setArticleAdminPage();
+					setViewArticlesStartPage(type);
 				},
-			"View Article", 13, 158, Pos.CENTER, 180, 150);
-		
-		//Delete an article
-		Button deleteButton = createButton(
-				(event) -> {
-					//setArticleAdminPage();
-				},
-			"Delete Article", 13, 158, Pos.CENTER, 180, 190);
+			"View Articles", 13, 158, Pos.CENTER, 180, 150);
 		
 		//Back button
 		Button backButton;
@@ -479,7 +485,7 @@ public class GUI extends Application {
 		}
 		
 		//Add all of the elements to the page
-		root.getChildren().addAll(title, createButton, updateButton, viewButton, deleteButton, backButton, errorMessage);
+		root.getChildren().addAll(title, createButton, viewButton, backButton, errorMessage);
 		
 		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
 		
@@ -527,10 +533,14 @@ public class GUI extends Application {
 		//Restores the system from a button click
 		Button createButton = createButton(
 				(event) -> {
-					if (databaseHelper.addArticle(titleNameField.getText(), groupNameField.getText(), authorsNameField.getText(), abstractNameField.getText(), keywordsNameField.getText(), bodyNameField.getText(), referencesNameField.getText())) {
-						setArticleModPage(type);
+					if (titleNameField.getText().equals("") || groupNameField.getText().equals("") || authorsNameField.getText().equals("") || abstractNameField.getText().equals("") || keywordsNameField.getText().equals("") || bodyNameField.getText().equals("") || referencesNameField.getText().equals("")) {
+						errorMessage.setText("Cannot leave fields blank");
 					} else {
-						errorMessage.setText("Error creating article");
+						if (databaseHelper.addArticle(titleNameField.getText(), groupNameField.getText(), authorsNameField.getText(), abstractNameField.getText(), keywordsNameField.getText(), bodyNameField.getText(), referencesNameField.getText())) {
+							setArticleModPage(type);
+						} else {
+							errorMessage.setText("Error creating article");
+						}
 					}
 				},
 				"Create article", 13, 158, Pos.CENTER, 180, 530);
@@ -557,8 +567,321 @@ public class GUI extends Application {
 		appStage.show();
 	}
 	
+	public static void setViewArticlesStartPage(String type) {
+		Pane root = new Pane();
+		
+		ScrollPane scrollPane = new ScrollPane();
+		scrollPane.setContent(root);
+		
+//		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 560);
+//		errorMessage.setTextFill(Color.RED);
+		
+		//The big title of the page
+		Label title = createLabel("Displayed Groups:", 30, 512, Pos.CENTER, 0, 0);
+		
+		Label groupsName = createLabel("Type the name of each group you want to display, separated by commas:", 12, 512, Pos.CENTER, 0, 40);
+		
+		databaseHelper.forEachArticle((id, titleName, group, author, abstrac, keywords, body, references, i) -> {
+			numGroups = i + 1;
+		});
+		if (numGroups <= 0) {
+			setViewArticlesPage(type, null);
+			return;
+		}
+		String[] allGroups = new String[numGroups];
+		CheckBox[] groupChecks = new CheckBox[numGroups];
+		
+		numGroups = 0;
+		databaseHelper.forEachArticle((id, titleName, group, author, abstrac, keywords, body, references, i) -> {
+			boolean duplicate = false;
+			for (int u = 0; u < numGroups; u++) {
+				if (group.equals(allGroups[u])) {
+					duplicate = true;
+				}
+			}
+			
+			if (!duplicate) {
+				allGroups[numGroups] = group;
+				
+				CheckBox groupName = createCheckBox(group, 25, 256, Pos.TOP_LEFT, 156, numGroups * 45 + 60);
+				groupName.setSelected(true);
+				
+				groupChecks[numGroups] = groupName;
+				
+				root.getChildren().addAll(groupName);
+				
+				numGroups++;
+			}
+		});
+		
+		//Restores the system from a button click
+		Button createButton = createButton(
+				(event) -> {
+					String[] finalGroups;
+					int groupNum = 0;
+					int u = 0;
+					while (u < groupChecks.length && groupChecks[u] != null) {
+						if (groupChecks[u].isSelected())
+							groupNum++;
+						u++;
+					}
+					finalGroups = new String[groupNum];
+					u = 0;
+					int o = 0;
+					while (u < groupChecks.length && groupChecks[u] != null) {
+						if (groupChecks[u].isSelected()) {
+							finalGroups[o] = groupChecks[u].getText();
+							o++;
+						}
+						u++;
+					}
+					
+					setViewArticlesPage(type, finalGroups);
+				},
+				"Continue", 13, 158, Pos.CENTER, 180, 45 * numGroups + 90);
+		
+		//Back button
+		Button backButton;
+		backButton = createButton(
+				(event) -> {
+					setArticleModPage(type);
+				},
+				"Back", 15, 64, Pos.CENTER, 428, 10);
+		
+		//Add all of the elements to the page
+		root.getChildren().addAll(title, groupsName,
+				createButton, backButton);
+		
+		Scene scene = new Scene(scrollPane, WINDOW_WIDTH, WINDOW_HEIGHT);
+		
+		appStage.setScene(scene);
+		
+		appStage.show();
+	}
+	
 	/**
-	 * Steup the page where you create invite codes as an admin
+	 * Views all articles regardless of group
+	 * @param type
+	 */
+	public static void setViewArticlesPage(String type) {
+		setViewArticlesPage(type, null);
+	}
+	
+	/**
+	 * Sets up the page where every article in the system is displayed
+	 */
+	public static void setViewArticlesPage(String type, String[] groups) {
+		Pane root = new Pane();
+		
+		ScrollPane scrollPane = new ScrollPane();
+		scrollPane.setContent(root);
+		
+		Pane promptPane = new Pane();
+		promptPane.setVisible(false);
+		Button noButton = createButton((event) -> {promptPane.setVisible(false);}, "BACK", 30, 256, Pos.CENTER, 128, 162);
+		Button deleteButton = createButton((event) -> {}, "DELETE", 30, 256, Pos.CENTER, 128, 232);
+		promptPane.getChildren().addAll(noButton, deleteButton);
+		
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 0);
+		errorMessage.setTextFill(Color.RED);
+		
+		//The big title of the page
+		Label title = createLabel("Users:", 30, 512, Pos.CENTER, 0, 0);
+		
+		numGroups = 0;
+		//Go through each user and create a label for the name and email, and give them buttons
+		databaseHelper.forEachArticle((id, titleName, group, author, abstrac, keywords, body, references, i) -> {
+			boolean found = false;
+			if (groups != null) {
+				for (int u = 0; u < groups.length; u++) {
+					if (groups[u].equals(group))
+						found = true;
+				}
+			}
+			if (groups == null || found) {
+				Label user = createLabel(titleName/* + " (By " + author + ")"*/, 13, 256, Pos.TOP_LEFT, 30, numGroups * 30 + 50);
+				Label groupName = createLabel("Group: " + group, 13, 256, Pos.TOP_LEFT, 156, numGroups * 30 + 50);
+				
+				Button viewButton = createButton(//View button
+						(event) -> {
+							setArticleViewPage(type, id);
+						},
+					"View", 15, 64, Pos.CENTER, 278, numGroups * 30 + 50);
+				
+				Button updateButton = createButton(//Edit button
+						(event) -> {
+							setArticleUpdatePage(type, id);
+						},
+					"Update", 15, 64, Pos.CENTER, 358, numGroups * 30 + 50);
+				
+				Button deleteArticleButton = createButton(//Delete button
+						(event) -> {},
+					"Delete", 15, 64, Pos.CENTER, 438, numGroups * 30 + 50);
+				deleteArticleButton.setOnAction((event) -> {
+					databaseHelper.deleteArticle(id);
+					user.setVisible(false);
+					groupName.setVisible(false);
+					viewButton.setVisible(false);
+					updateButton.setVisible(false);
+					deleteArticleButton.setVisible(false);
+				});
+				
+				root.getChildren().addAll(user, groupName, viewButton, updateButton, deleteArticleButton);
+				
+				numGroups++;
+			}
+		});
+		
+		//Go back to the admin page with a button press
+		Button backButton = createButton(
+				(event) -> {
+					setArticleModPage(type);
+				},
+			"Back", 15, 64, Pos.CENTER, 438, 10);
+		
+		//Add all of the elements to the page
+		root.getChildren().addAll(title, backButton, errorMessage, promptPane);
+		
+		Scene scene = new Scene(scrollPane, WINDOW_WIDTH, WINDOW_HEIGHT);
+		
+		appStage.setScene(scene);
+		
+		appStage.show();
+	}
+	
+	public static void setArticleUpdatePage(String type, long id) {
+		Article article = databaseHelper.getArticle(id);
+		
+		Pane root = new Pane();
+		
+		ScrollPane scrollPane = new ScrollPane();
+		scrollPane.setContent(root);
+		
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 560);
+		errorMessage.setTextFill(Color.RED);
+		
+		//The big title of the page
+		Label title = createLabel("Update Article", 30, 512, Pos.CENTER, 0, 0);
+		
+		Label titleName = createLabel("Title:", 12, 512, Pos.CENTER, 0, 40);
+		TextField titleNameField = createTextField(article.title, 15, 512, Pos.CENTER, 0, 55);
+		
+		Label groupName = createLabel("Group:", 12, 512, Pos.CENTER, 0, 90);
+		TextField groupNameField = createTextField(article.group, 15, 512, Pos.CENTER, 0, 105);
+		
+		Label authorsName = createLabel("Authors:", 12, 512, Pos.CENTER, 0, 130);
+		TextField authorsNameField = createTextField(article.authors, 15, 512, Pos.CENTER, 0, 145);
+		
+		Label abstractName = createLabel("Abstract:", 12, 512, Pos.CENTER, 0, 170);
+		TextField abstractNameField = createTextField(article.abstrac, 15, 512, Pos.CENTER, 0, 185);
+		
+		Label keywordsName = createLabel("Keywords:", 12, 512, Pos.CENTER, 0, 210);
+		TextField keywordsNameField = createTextField(article.keywords, 15, 512, Pos.CENTER, 0, 225);
+		
+		Label bodyName = createLabel("Body:", 12, 512, Pos.CENTER, 0, 250);
+		TextArea bodyNameField = createTextArea(article.body, 15, 312, true, 0, 270);
+		bodyNameField.setMaxWidth(512);
+		bodyNameField.setMinHeight(70);
+		
+		Label referencesName = createLabel("References:", 12, 512, Pos.CENTER, 0, 480);
+		TextField referencesNameField = createTextField(article.references, 15, 512, Pos.CENTER, 0, 495);
+		
+		
+		//Saves the newly created article
+		Button createButton = createButton(
+				(event) -> {
+					if (databaseHelper.updateArticle(id, titleNameField.getText(), groupNameField.getText(), authorsNameField.getText(), abstractNameField.getText(), keywordsNameField.getText(), bodyNameField.getText(), referencesNameField.getText())) {
+						setViewArticlesPage(type);
+					} else {
+						errorMessage.setText("Error updating article");
+					}
+				},
+				"Save", 13, 158, Pos.CENTER, 180, 530);
+		
+		//Back button
+		Button backButton;
+		backButton = createButton(
+				(event) -> {
+					setViewArticlesPage(type);
+				},
+				"Back", 15, 64, Pos.CENTER, 428, 20);
+		
+		//Add all of the elements to the page
+		root.getChildren().addAll(title, titleName, titleNameField, groupName, 
+				groupNameField, authorsName, authorsNameField, abstractName, abstractNameField, 
+				keywordsName, keywordsNameField, bodyName, bodyNameField, 
+				referencesName, referencesNameField, 
+				createButton, backButton, errorMessage);
+		
+		Scene scene = new Scene(scrollPane, WINDOW_WIDTH, WINDOW_HEIGHT);
+		
+		appStage.setScene(scene);
+		
+		appStage.show();
+	}
+	
+	public static void setArticleViewPage(String type, long id) {
+		Article article = databaseHelper.getArticle(id);
+		
+		Pane root = new Pane();
+		
+		ScrollPane scrollPane = new ScrollPane();
+		scrollPane.setContent(root);
+		
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 530);
+		errorMessage.setTextFill(Color.RED);
+		
+		//The big title of the page
+		Label title = createLabel("View Article", 30, 512, Pos.CENTER, 0, 0);
+		
+		//Label titleName = createLabel("Title:", 12, 512, Pos.CENTER, 0, 40);
+		TextField titleNameField = createText(article.title, 15, 512, Pos.CENTER, 0, 55);
+		
+		//Label groupName = createLabel("Group:", 12, 512, Pos.CENTER, 0, 90);
+		TextField groupNameField = createText(article.group, 15, 512, Pos.CENTER, 0, 105);
+		
+		//Label authorsName = createLabel("Authors:", 12, 512, Pos.CENTER, 0, 130);
+		TextField authorsNameField = createText(article.authors, 15, 512, Pos.CENTER, 0, 135);
+		
+		//Label abstractName = createLabel("Abstract:", 12, 512, Pos.CENTER, 0, 170);
+		TextField abstractNameField = createText(article.abstrac, 15, 512, Pos.CENTER, 0, 165);
+		
+		//Label keywordsName = createLabel("Keywords:", 12, 512, Pos.CENTER, 0, 210);
+		TextField keywordsNameField = createText(article.keywords, 15, 512, Pos.CENTER, 0, 195);
+		
+		//Label bodyName = createLabel("Body:", 12, 512, Pos.CENTER, 0, 250);
+		TextArea bodyNameField = createTextArea(article.body, 15, 312, true, 0, 230);
+		bodyNameField.setEditable(false);
+		bodyNameField.setMaxWidth(512);
+		bodyNameField.setMinHeight(70);
+		
+		//Label referencesName = createLabel("References:", 12, 512, Pos.CENTER, 0, 480);
+		TextField referencesNameField = createText(article.references, 15, 512, Pos.CENTER, 0, 445);
+		
+		
+		//Back button
+		Button backButton;
+		backButton = createButton(
+				(event) -> {
+					setViewArticlesPage(type);
+				},
+				"Back", 15, 64, Pos.CENTER, 428, 20);
+		
+		//Add all of the elements to the page
+		root.getChildren().addAll(title, titleNameField, 
+				groupNameField, authorsNameField, abstractNameField, 
+				keywordsNameField, bodyNameField, 
+				referencesNameField, backButton, errorMessage);
+		
+		Scene scene = new Scene(scrollPane, WINDOW_WIDTH, WINDOW_HEIGHT);
+		
+		appStage.setScene(scene);
+		
+		appStage.show();
+	}
+	
+	/**
+	 * Setup the page where you create invite codes as an admin
 	 */
 	public static void setGenerateInviteCodePage() {
 		Pane root = new Pane();

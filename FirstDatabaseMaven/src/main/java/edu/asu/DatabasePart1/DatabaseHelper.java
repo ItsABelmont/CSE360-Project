@@ -786,6 +786,10 @@ class DatabaseHelper {
 		void doThing(int id, String email, String[] roles, String first, String middle, String last, String preferred);
 	}
 	
+	public interface ArticleMethod {
+		void doThing(long id, String title, String group, String author, String abstrac, String keywords, String body, String references, int i);
+	}
+	
 	/**
 	 * Gets the string array of roles for a user
 	 * @param email
@@ -833,6 +837,38 @@ class DatabaseHelper {
 				String last = rs.getString("lastName");
 				String preferred = rs.getString("preferredName");
 				method.doThing(id, email, Roles.stringToArray(role), first, middle, last, preferred);
+			}
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * This method performs a given action looping through every user
+	 * @param method
+	 */
+	public void forEachArticle(ArticleMethod method) {
+		String sql = "SELECT * FROM articles";
+		
+		try {
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(sql); 
+	
+			int i = 0;
+			while(rs.next()) {
+				// Retrieve by column name 
+				int id  = rs.getInt("id");
+				
+				String title = rs.getString("title");
+				String group = rs.getString("groupName");
+				String author = rs.getString("authors");
+				String abstrac = rs.getString("abstract");
+				String keywords = rs.getString("keywords");
+				String body = rs.getString("body");
+				String references = rs.getString("references");
+				method.doThing(id, title, group, author, abstrac, keywords, body, references, i);
+				i++;
 			}
 		}
 		catch (SQLException e) {
@@ -951,15 +987,19 @@ class DatabaseHelper {
 		return false;
 	}
 	//deletes articles
-	public void deleteArticle(int id) throws Exception{
-		String query = "DELETE FROM articles WHERE id = ?";
-		PreparedStatement statement = connection.prepareStatement(query);
-		statement.setInt(1, id);
-		statement.executeUpdate();
+	public void deleteArticle(long id) {
+		try {
+			String query = "DELETE FROM articles WHERE id = ?";
+			PreparedStatement statement = connection.prepareStatement(query);
+			statement.setLong(1, id);
+			statement.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	//updates articles
-	public void updateArticle(int id, String title, String groupName, String authors, String abstrac, String keywords, String body, String references) {
+	public boolean updateArticle(long id, String title, String groupName, String authors, String abstrac, String keywords, String body, String references) {
 		
 		String sql = "UPDATE articles SET title = ?, groupName = ?, authors = ?, abstract = ?, keywords = ?, body = ?, references = ? WHERE id = ?";
 		
@@ -971,12 +1011,15 @@ class DatabaseHelper {
 			statement.setString(5, keywords);
 			statement.setString(6, body);
 			statement.setString(7, references);
-			statement.setInt(8, id);
+			statement.setInt(8, (int) id);
 			int rowAffected = statement.executeUpdate();
+			
+			return true;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return false;
 	}
 	
 	public void displayArticleByAdmin() throws Exception{
@@ -1036,6 +1079,35 @@ class DatabaseHelper {
 		} 
 	}
 	
+	//lets a user see a specific article if they have they correct id
+	public Article getArticle(long id) {
+		try {
+			String sql = "SELECT * FROM articles"; 
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(sql); 
+	
+			while(rs.next()) { 
+				if(rs.getInt("id") == id) {
+					long ide  = rs.getInt("id"); 
+					String title = rs.getString("title"); 
+					String group = rs.getString("groupName");
+					String authors = rs.getString("authors");  
+					String abstrac = rs.getString("abstract");
+					String keywords = rs.getString("keywords");
+					String encryptedBody = rs.getString("body");
+					
+					String references = rs.getString("references");
+	
+					return new Article(ide, title, group, authors, abstrac, keywords, encryptedBody, references);
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
 	//Backs articles up
 	public void backupArticles(String filename) {
 		try {
@@ -1044,14 +1116,14 @@ class DatabaseHelper {
 	
 	        try (FileWriter writer = new FileWriter(filename)) {
 	            while (rs.next()) {
-	                String data = rs.getLong("id") + "+" +
-	                			  rs.getString("title") + "+" +
-	                			  rs.getString("groupName") + "+" +//each line gets added to the backup
-	                              rs.getString("authors") + "+" +
-	                              rs.getString("abstract") + "+" +
-	                              rs.getString("keywords") + "+" +
-	                              rs.getString("body") + "+" +
-	                              rs.getString("references") + "+" +
+	                String data = rs.getLong("id") + "|" +
+	                			  rs.getString("title") + "|" +
+	                			  rs.getString("groupName") + "|" +//each line gets added to the backup
+	                              rs.getString("authors") + "|" +
+	                              rs.getString("abstract") + "|" +
+	                              rs.getString("keywords") + "|" +
+	                              rs.getString("body") + "|" +
+	                              rs.getString("references") + "|" +
 	                              rs.getString("delete");
 	                writer.write(data + "\n");
 	            }
@@ -1074,14 +1146,14 @@ class DatabaseHelper {
 	            while (rs.next()) {
 	            	if(rs.getString("groupName").equals(group)) {
 	            		outputValid = true;
-	            		String data = rs.getLong("id") + "+" +
-	            					  rs.getString("title") + "+" +
-	            					  rs.getString("groupName") + "+" +//each line gets added to the backup
-	            					  rs.getString("authors") + "+" +
-	            					  rs.getString("abstract") + "+" +
-	            					  rs.getString("keywords") + "+" +
-	            					  rs.getString("body") + "+" +
-	            					  rs.getString("references") + "+" +
+	            		String data = rs.getLong("id") + "|" +
+	            					  rs.getString("title") + "|" +
+	            					  rs.getString("groupName") + "|" +//each line gets added to the backup
+	            					  rs.getString("authors") + "|" +
+	            					  rs.getString("abstract") + "|" +
+	            					  rs.getString("keywords") + "|" +
+	            					  rs.getString("body") + "|" +
+	            					  rs.getString("references") + "|" +
 	            					  rs.getString("delete");
 	            		writer.write(data + "\n");
 	            	}
@@ -1110,7 +1182,7 @@ class DatabaseHelper {
 		    try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
 		        String line;
 		        while ((line = reader.readLine()) != null) {
-		            String[] values = line.split("+");
+		            String[] values = line.split("\\|");
 		            if (values.length == 9) {
 		                // Set parameters for update statement
 		                for (int i = 1; i < 9; i++) {
@@ -1118,7 +1190,7 @@ class DatabaseHelper {
 		                }
 		                updatePstmt.setString(9, values[0]); // id is the last parameter
 		                int affectedRows = updatePstmt.executeUpdate();
-	
+		                
 		                // If no rows were affected by update, insert new row
 		                if (affectedRows == 0) {
 		                    for (int i = 0; i < 9; i++) {
@@ -1155,7 +1227,7 @@ class DatabaseHelper {
 	        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
 	            String line;
 	            while ((line = reader.readLine()) != null) {
-	                String[] values = line.split("+");
+	                String[] values = line.split("\\|");
 	                if (values.length == 9) {
 	                    for (int i = 0; i < 9; i++) {
 	                        pstmt.setString(i + 1, values[i]); //reads through the lines adding back to the table
