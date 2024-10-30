@@ -1,5 +1,10 @@
 package edu.asu.DatabasePart1;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.*;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -250,34 +255,35 @@ class DatabaseHelper {
 	 * @throws SQLException
 	 */
 	public String userReset(String email) throws SQLException{
-		Scanner scanner = new Scanner(System.in);
-		
-		String query = "SELECT * FROM expire";
-		Statement stmt = connection.createStatement();
-		ResultSet rs = stmt.executeQuery(query); 
-		
-		System.out.println("Looks like your account is trying to be reset go ahead\n"
-				+ "and insert the temp password you where given to reset your password!\n");
-		
-		//checks to see if it is valid and if so go to resetPassword function/method
-		while(rs.next()) {
-			if(rs.getString("email").equals(email)) {
-				String pass = scanner.nextLine();
-				if(rs.getString("password").equals(pass)) {
-					String hold = resetPassword(email);
-					
-					String sql = "DELETE FROM expire WHERE password = ?";
-					PreparedStatement statement = connection.prepareStatement(sql);
-					statement.setString(1, pass);
-					statement.executeUpdate();
-					
-					return hold;
-				}
-				else {
-					System.out.println("That is not the password!");
+		try (Scanner scanner = new Scanner(System.in)) {
+			String query = "SELECT * FROM expire";
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(query); 
+			
+			System.out.println("Looks like your account is trying to be reset go ahead\n"
+					+ "and insert the temp password you where given to reset your password!\n");
+			
+			//checks to see if it is valid and if so go to resetPassword function/method
+			while(rs.next()) {
+				if(rs.getString("email").equals(email)) {
+					String pass = scanner.nextLine();
+					if(rs.getString("password").equals(pass)) {
+						String hold = resetPassword(email);
+						
+						String sql = "DELETE FROM expire WHERE password = ?";
+						PreparedStatement statement = connection.prepareStatement(sql);
+						statement.setString(1, pass);
+						statement.executeUpdate();
+						
+						return hold;
+					}
+					else {
+						System.out.println("That is not the password!");
+					}
 				}
 			}
 		}
+		
 		return "";
 		
 	}
@@ -424,8 +430,6 @@ class DatabaseHelper {
 			while(rs.next()) {
 				//big if determines if user is in and gives their role
 				if(rs.getString("email").equals(email) && rs.getString("password").equals(Password.hashFull(password, rs.getString("random")))) {
-					this.universalpreferredName = rs.getString("preferredName"); 
-					this.universalfirstName = rs.getString("firstName");
 					return Roles.stringToArray(rs.getString("role"));
 				}
 			}
@@ -435,19 +439,6 @@ class DatabaseHelper {
 		}
 		
 		return new String[] {};
-	}
-	
-	public String getFirstName() {
-		return this.universalfirstName;
-	}
-	public String getRole() {
-		return this.universalRole;
-	}
-	public String[] getRoles() {
-		return Roles.stringToArray(this.universalRole);
-	}
-	public String getpreferredName() {
-		return this.universalpreferredName;
 	}
 	
 	/**
@@ -505,16 +496,16 @@ class DatabaseHelper {
 		String sql = "SELECT * FROM invite"; 
 		Statement stmt = connection.createStatement();
 		ResultSet rs = stmt.executeQuery(sql); 
-		Scanner scanner = new Scanner(System.in);
-
-		while(rs.next()){
-			if(rs.getString("invite").equals(invite)) {
-				System.out.println("Huzzah! It works give a username and password\nUsername: ");
-				String email = scanner.nextLine();
-				System.out.println("Password: ");
-				String password = scanner.nextLine();
-				register(email, password, rs.getString("role"));
-				break;
+		try (Scanner scanner = new Scanner(System.in)) {
+			while(rs.next()){
+				if(rs.getString("invite").equals(invite)) {
+					System.out.println("Huzzah! It works give a username and password\nUsername: ");
+					String email = scanner.nextLine();
+					System.out.println("Password: ");
+					String password = scanner.nextLine();
+					register(email, password, rs.getString("role"));
+					break;
+				}
 			}
 		}
 		
@@ -540,24 +531,6 @@ class DatabaseHelper {
 	 * @param email
 	 * @return
 	 */
-	public boolean checkFinish(String email) {
-		try {
-			String sql = "SELECT * FROM cse360users";
-			Statement stmt = connection.createStatement();
-			
-			ResultSet rs = stmt.executeQuery(sql);
-			
-			while(rs.next()) {
-				if (rs.getString("firstName").equals("placeholder") && rs.getString("email").equals(email)) {
-					return true;
-				}
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		
-		return false;
-	}
 	
 	/**
 	 * Writes the remaining data to the database
@@ -575,20 +548,17 @@ class DatabaseHelper {
 			statement.setString(1, preferred);
 			statement.setString(2, email);
 			int rowAffected = statement.executeUpdate();
-			this.universalpreferredName = preferred;
 
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		//to get middle and last just keeping repeating this code over and over
 		sql = "UPDATE cse360users SET firstName = ? WHERE email = ?";
-		this.universalfirstName = first;
 
 		try(PreparedStatement statement = connection.prepareStatement(sql)){
 			statement.setString(1, first);
 			statement.setString(2, email);
 			int rowAffected = statement.executeUpdate();
-			this.universalfirstName = first;
 
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -647,17 +617,17 @@ class DatabaseHelper {
 	 */
 	public void deleteUser() throws SQLException{
 		String sql = "DELETE FROM cse360users WHERE email=?";
-		Scanner scanner = new Scanner(System.in);
-
-		PreparedStatement statement = connection.prepareStatement(sql);
-		System.out.println("Choose a user to delete");
-		String email = scanner.nextLine();
-		statement.setString(1, email);
-		
-		System.out.println("Are you sure that you want to do this?");
-		String answer = scanner.nextLine();
-		if(answer.equals("Yes")) {
-			statement.executeUpdate();
+		try (Scanner scanner = new Scanner(System.in)) {
+			PreparedStatement statement = connection.prepareStatement(sql);
+			System.out.println("Choose a user to delete");
+			String email = scanner.nextLine();
+			statement.setString(1, email);
+			
+			System.out.println("Are you sure that you want to do this?");
+			String answer = scanner.nextLine();
+			if(answer.equals("Yes")) {
+				statement.executeUpdate();
+			}
 		}
 		
 	}
