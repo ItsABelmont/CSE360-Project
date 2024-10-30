@@ -494,6 +494,10 @@ public class GUI extends Application {
 		appStage.show();
 	}
 	
+	/**
+	 * This sets the page for creating a new article
+	 * @param type
+	 */
 	public static void setCreateArticlePage(String type) {
 		Pane root = new Pane();
 		
@@ -521,6 +525,7 @@ public class GUI extends Application {
 		Label keywordsName = createLabel("Keywords:", 12, 512, Pos.CENTER, 0, 210);
 		TextField keywordsNameField = createTextField("", 15, 512, Pos.CENTER, 0, 225);
 		
+		//The body is unique and therefore has it's own TextArea
 		Label bodyName = createLabel("Body:", 12, 512, Pos.CENTER, 0, 250);
 		TextArea bodyNameField = createTextArea("", 15, 312, true, 0, 270);
 		bodyNameField.setMaxWidth(512);
@@ -567,6 +572,10 @@ public class GUI extends Application {
 		appStage.show();
 	}
 	
+	/**
+	 * This page polls the user as to which groups they want to filter by
+	 * @param type
+	 */
 	public static void setViewArticlesStartPage(String type) {
 		Pane root = new Pane();
 		
@@ -581,9 +590,11 @@ public class GUI extends Application {
 		
 		Label groupsName = createLabel("Type the name of each group you want to display, separated by commas:", 12, 512, Pos.CENTER, 0, 40);
 		
+		//Get how many total groups are there
 		databaseHelper.forEachArticle((id, titleName, group, author, abstrac, keywords, body, references, i) -> {
 			numGroups = i + 1;
 		});
+		//If there are no groups, skip this page
 		if (numGroups <= 0) {
 			setViewArticlesPage(type, null);
 			return;
@@ -591,6 +602,7 @@ public class GUI extends Application {
 		String[] allGroups = new String[numGroups];
 		CheckBox[] groupChecks = new CheckBox[numGroups];
 		
+		//Now loop through each group and add each unique group to the GUI
 		numGroups = 0;
 		databaseHelper.forEachArticle((id, titleName, group, author, abstrac, keywords, body, references, i) -> {
 			boolean duplicate = false;
@@ -606,6 +618,7 @@ public class GUI extends Application {
 				CheckBox groupName = createCheckBox(group, 25, 256, Pos.TOP_LEFT, 156, numGroups * 45 + 60);
 				groupName.setSelected(true);
 				
+				//Add the CheckBox to a reference array for later
 				groupChecks[numGroups] = groupName;
 				
 				root.getChildren().addAll(groupName);
@@ -620,14 +633,17 @@ public class GUI extends Application {
 					String[] finalGroups;
 					int groupNum = 0;
 					int u = 0;
+					//Determine how many groups are selected
 					while (u < groupChecks.length && groupChecks[u] != null) {
 						if (groupChecks[u].isSelected())
 							groupNum++;
 						u++;
 					}
+					//Make an array of the correct length
 					finalGroups = new String[groupNum];
 					u = 0;
 					int o = 0;
+					//Now loop through the created array and add every checked group to it
 					while (u < groupChecks.length && groupChecks[u] != null) {
 						if (groupChecks[u].isSelected()) {
 							finalGroups[o] = groupChecks[u].getText();
@@ -636,6 +652,7 @@ public class GUI extends Application {
 						u++;
 					}
 					
+					//Start the view page with the String[] of which groups to display
 					setViewArticlesPage(type, finalGroups);
 				},
 				"Continue", 13, 158, Pos.CENTER, 180, 45 * numGroups + 90);
@@ -717,6 +734,7 @@ public class GUI extends Application {
 				Button deleteArticleButton = createButton(//Delete button
 						(event) -> {},
 					"Delete", 15, 64, Pos.CENTER, 438, numGroups * 30 + 50);
+				//Delete the article on click and stop displaying it in the GUI
 				deleteArticleButton.setOnAction((event) -> {
 					databaseHelper.deleteArticle(id);
 					user.setVisible(false);
@@ -749,6 +767,11 @@ public class GUI extends Application {
 		appStage.show();
 	}
 	
+	/**
+	 * This page allows a user to edit an article
+	 * @param type
+	 * @param id
+	 */
 	public static void setArticleUpdatePage(String type, long id) {
 		Article article = databaseHelper.getArticle(id);
 		
@@ -820,6 +843,11 @@ public class GUI extends Application {
 		appStage.show();
 	}
 	
+	/**
+	 * This page is very similar to the update page, the text fields are just not editable
+	 * @param type
+	 * @param id
+	 */
 	public static void setArticleViewPage(String type, long id) {
 		Article article = databaseHelper.getArticle(id);
 		
