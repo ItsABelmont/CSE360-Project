@@ -1,5 +1,10 @@
 package edu.asu.DatabasePart1;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.*;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -71,6 +76,17 @@ class DatabaseHelper {
 				+ "invite VARCHAR(255), "
 				+ "role VARCHAR(255))";
 		statement.execute(inviteTable); //initializes invite table
+		String articleTable = "CREATE TABLE IF NOT EXISTS articles ("
+				+ "id LONG UNIQUE, "
+				+ "title VARCHAR(255), "
+				+ "groupName VARCHAR(255), "
+				+ "authors VARCHAR(1000), "
+				+ "abstract VARCHAR(10000), "
+				+ "keywords VARCHAR(1000), "
+				+ "body VARCHAR(100000000), "
+				+ "references VARCHAR(10000), "
+				+ "delete VARCHAR(1))";
+		statement.execute(articleTable);
 		String expireTable = "CREATE TABLE IF NOT EXISTS expire ("
 				+ "email VARCHAR(255), "
 				+ "password VARCHAR(255), "
@@ -546,7 +562,7 @@ class DatabaseHelper {
 		}
 		
 		return false;
-	}
+	}	
 	
 	/**
 	 * Writes the remaining data to the database
@@ -903,6 +919,243 @@ class DatabaseHelper {
 			System.out.print(", First: " + password); 
 			System.out.println(", Last: " + role); 
 		} 
+	}
+	
+	//adds a new article
+	public boolean addArticle(String title, String group, String authors, String abstrac, String keywords, String body, String references) throws Exception{
+		//random unique long can change right limit for longer long
+		Random random = new Random();
+        long leftLimit = 1L;
+        long rightLimit = 10000000L;
+        long randomLong = leftLimit + (long) (random.nextDouble() * (rightLimit - leftLimit));
+		String insertUser = "INSERT INTO  articles (id, title, groupName, authors, abstract, keywords, body, references, delete) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
+			pstmt.setLong(1, randomLong);
+			pstmt.setString(2, title);
+			pstmt.setString(3, group);
+			pstmt.setString(4, authors);
+			pstmt.setString(5, abstrac);
+			pstmt.setString(6, keywords);
+			pstmt.setString(7, body);
+			pstmt.setString(8, references);
+			pstmt.setString(9, "f");
+			pstmt.executeUpdate();
+		}
+		
+		return true;
+	}
+	//deletes articles
+	public void deleteArticle(int id) throws Exception{
+		String query = "DELETE FROM articles WHERE id = ?";
+		PreparedStatement statement = connection.prepareStatement(query);
+		statement.setInt(1, id);
+		statement.executeUpdate();
+	}
+	
+	//updates articles
+	public void updateArticle(int id, String title, String groupName, String authors, String abstrac, String keywords, String body, String references) {
+		
+		String sql = "UPDATE articles SET title = ?, groupName = ?, authors = ?, abstract = ?, keywords = ?, body = ?, references = ? WHERE id = ?";
+		
+		try(PreparedStatement statement = connection.prepareStatement(sql)){
+			statement.setString(1, title);
+			statement.setString(2, groupName);
+			statement.setString(3, authors);
+			statement.setString(4, abstrac);
+			statement.setString(5, keywords);
+			statement.setString(6, body);
+			statement.setString(7, references);
+			statement.setInt(8, id);
+			int rowAffected = statement.executeUpdate();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void displayArticleByAdmin() throws Exception{
+		String sql = "SELECT * FROM articles"; 
+		Statement stmt = connection.createStatement();
+		ResultSet rs = stmt.executeQuery(sql); 
+
+		while(rs.next()) { 
+			long id  = rs.getInt("id"); 
+			String title = rs.getString("title"); 
+			String group = rs.getString("groupName");
+			String authors = rs.getString("authors");  
+			String abstrac = rs.getString("abstract");
+			String keywords = rs.getString("keywords");
+			String encryptedBody = rs.getString("body");
+			
+			String references = rs.getString("references");
+
+			System.out.println("ID: " + id);
+			System.out.print("Title: " + title); 
+			System.out.println("\nGroup: " + group);
+			System.out.print(", Authors: " + authors); 
+			System.out.println(", Abstract: " + abstrac); 
+			System.out.print("keywords: " + keywords);
+			System.out.print(" Encrypted body: " + encryptedBody);
+			System.out.println("\nReferences: " + references); 
+		} 
+	}
+	
+	//lets a user see a specific article if they have they correct id
+	public void seeArticle(int id) throws SQLException {
+		String sql = "SELECT * FROM articles"; 
+		Statement stmt = connection.createStatement();
+		ResultSet rs = stmt.executeQuery(sql); 
+
+		while(rs.next()) { 
+			if(rs.getInt("id") == id) {
+			long ide  = rs.getInt("id"); 
+			String title = rs.getString("title"); 
+			String group = rs.getString("groupName");
+			String authors = rs.getString("authors");  
+			String abstrac = rs.getString("abstract");
+			String keywords = rs.getString("keywords");
+			String encryptedBody = rs.getString("body");
+			
+			String references = rs.getString("references");
+
+			System.out.println("ID: " + ide);
+			System.out.print("Title: " + title); 
+			System.out.println("\nGroup: " + group);
+			System.out.print(", Authors: " + authors); 
+			System.out.println(", Abstract: " + abstrac); 
+			System.out.print("keywords: " + keywords);
+			System.out.print(" Encrypted body: " + encryptedBody);
+			System.out.println("\nReferences: " + references); 
+			}
+		} 
+	}
+	
+	//Backs articles up
+	public void backupArticles(String filename) {
+		try {
+			Statement stmt = connection.createStatement();
+	        ResultSet rs = stmt.executeQuery("SELECT * FROM articles");
+	
+	        try (FileWriter writer = new FileWriter(filename)) {
+	            while (rs.next()) {
+	                String data = rs.getLong("id") + "," +
+	                			  rs.getString("title") + "," +
+	                			  rs.getString("groupName") + "," +//each line gets added to the backup
+	                              rs.getString("authors") + "," +
+	                              rs.getString("abstract") + "," +
+	                              rs.getString("keywords") + "," +
+	                              rs.getString("body") + "," +
+	                              rs.getString("references") + "," +
+	                              rs.getString("delete");
+	                writer.write(data + "\n");
+	            }
+	        }
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	//backs up articles based off of their group user inputted
+	public boolean groupBackupArticles(String filename, String group) {
+		try {
+			Statement stmt = connection.createStatement();
+	        ResultSet rs = stmt.executeQuery("SELECT * FROM articles");
+	        
+	        boolean outputValid = false;
+	        try (FileWriter writer = new FileWriter(filename)) {
+	            while (rs.next()) {
+	            	if(rs.getString("groupName").equals(group)) {
+	            		outputValid = true;
+	            		String data = rs.getLong("id") + "," +
+	            					  rs.getString("title") + "," +
+	            					  rs.getString("groupName") + "," +//each line gets added to the backup
+	            					  rs.getString("authors") + "," +
+	            					  rs.getString("abstract") + "," +
+	            					  rs.getString("keywords") + "," +
+	            					  rs.getString("body") + "," +
+	            					  rs.getString("references") + "," +
+	            					  rs.getString("delete");
+	            		writer.write(data + "\n");
+	            	}
+	            }
+	        }
+			
+	        return outputValid;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	//merges instead of deleting all of the new articles
+	public void mergeArticles(String filename) throws Exception{		    // Prepare SQL statements
+	    String updateQuery = "UPDATE articles SET title = ?, groupName = ?, authors = ?, abstract = ?, keywords = ?, body = ?, references = ?, delete = ? WHERE id = ?";
+	    String insertQuery = "INSERT INTO articles (id, title, groupName, authors, abstract, keywords, body, references, delete) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	    
+	    PreparedStatement updatePstmt = connection.prepareStatement(updateQuery);
+	    PreparedStatement insertPstmt = connection.prepareStatement(insertQuery);
+
+	    try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+	        String line;
+	        while ((line = reader.readLine()) != null) {
+	            String[] values = line.split(",");
+	            if (values.length == 9) {
+	                // Set parameters for update statement
+	                for (int i = 1; i < 9; i++) {
+	                    updatePstmt.setString(i, values[i]);
+	                }
+	                updatePstmt.setString(9, values[0]); // id is the last parameter
+	                int affectedRows = updatePstmt.executeUpdate();
+
+	                // If no rows were affected by update, insert new row
+	                if (affectedRows == 0) {
+	                    for (int i = 0; i < 9; i++) {
+	                        insertPstmt.setString(i + 1, values[i]);
+	                    }
+	                    insertPstmt.executeUpdate();
+	                }
+	            } else {
+	                System.err.println("Skipping line due to incorrect number of values: " + line);
+	            }
+	        }
+	    } 
+
+	}
+	
+	//restores articles depending on the file name
+	public void restoreArticles(String filename) {
+		try {
+			//empties table as is required to back it up
+			String query = "TRUNCATE TABLE articles";
+			statement.executeUpdate(query);
+		
+	        PreparedStatement pstmt = connection.prepareStatement(
+	            "INSERT INTO articles (id, title, groupName, authors, abstract, keywords, body, references, delete) VALUES (?, ?,?, ?, ?, ?, ?, ?, ?)"
+	        );
+
+	        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+	            String line;
+	            while ((line = reader.readLine()) != null) {
+	                String[] values = line.split(",");
+	                if (values.length == 9) {
+	                    for (int i = 0; i < 9; i++) {
+	                        pstmt.setString(i + 1, values[i]); //reads through the lines adding back to the table
+	                    }
+	                    pstmt.executeUpdate();
+	                } else {
+	                    System.err.println("Skipping line due to incorrect number of values: " + line);
+	                }
+	            }
+	        } 
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	

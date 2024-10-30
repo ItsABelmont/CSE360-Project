@@ -1,5 +1,6 @@
 package edu.asu.DatabasePart1;
 
+import java.io.File;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
@@ -18,6 +19,7 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 /**
@@ -214,7 +216,7 @@ public class GUI extends Application {
 	public static void setAdminPage() {
 		Pane root = new Pane();
 		
-		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 270);
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 320);
 		errorMessage.setTextFill(Color.RED);
 		
 		//The big title of the page
@@ -237,9 +239,23 @@ public class GUI extends Application {
 		//Go to the article page
 		Button articlesButton = createButton(
 				(event) -> {
-					setArticleAdminPage();
+					setArticleModPage("admin");
 				},
 			"Articles", 13, 158, Pos.CENTER, 180, 170);
+		
+		//Go to the restore page
+		Button backupButton = createButton(
+				(event) -> {
+					setBackupPage("admin");
+				},
+			"Backup System", 13, 158, Pos.CENTER, 180, 220);
+		
+		//Go to the restore page
+		Button restoreButton = createButton(
+				(event) -> {
+					setRestorePage("admin");
+				},
+			"Restore System", 13, 158, Pos.CENTER, 180, 270);
 		
 		//Logout button
 		Button logoutButton = createButton(
@@ -249,7 +265,7 @@ public class GUI extends Application {
 			"Logout", 15, 64, Pos.CENTER, 438, 10);
 		
 		//Add all of the elements to the page
-		root.getChildren().addAll(title, generateCodeButton, listUsersButton, articlesButton, logoutButton, errorMessage);
+		root.getChildren().addAll(title, generateCodeButton, listUsersButton, articlesButton, backupButton, restoreButton, logoutButton, errorMessage);
 		
 		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
 		
@@ -259,9 +275,157 @@ public class GUI extends Application {
 	}
 	
 	/**
-	 * Creates the page for admins to interact with the article database
+	 * Creates the page for packing up articles and groups
 	 */
-	public static void setArticleAdminPage() {
+	public static void setBackupPage(String type) {
+		Pane root = new Pane();
+		
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 270);
+		errorMessage.setTextFill(Color.RED);
+		
+		//The big title of the page
+		Label title = createLabel("Backup System", 30, 512, Pos.CENTER, 0, 0);
+		
+		Label groupName = createLabel("Group Name", 15, 512, Pos.CENTER, 0, 70);
+		TextField groupField = createTextField("", 15, 256, Pos.CENTER, 128, 90);
+		
+		Label fileName = createLabel("Export File Name:", 15, 512, Pos.CENTER, 0, 120);
+		TextField fileNameField = createTextField("", 15, 256, Pos.CENTER, 128, 140);
+		
+		//Backs up the whole article system to a file
+		Button wholeSystemButton = createButton(
+				(event) -> {
+					String file = fileNameField.getText();
+					if (file.equals("")) {
+						errorMessage.setText("File must have a name!");
+					} else {
+						databaseHelper.backupArticles(fileNameField.getText());
+					}
+				},
+				"Backup Whole System", 13, 158, Pos.CENTER, 180, 170);
+		
+		//Update an article's info
+		Button groupButton = createButton(
+				(event) -> {
+					String group = groupField.getText();
+					String file = fileNameField.getText();
+					if (group.equals("") || file.equals("")) {
+						errorMessage.setText("Group and file must have a name!");
+					} else {
+						if (!databaseHelper.groupBackupArticles(file, group)) {
+							errorMessage.setText("Group name \"" + group + "\" does not exist!");
+						}
+					}
+				},
+			"Backup Group", 13, 158, Pos.CENTER, 180, 220);
+		
+		//Back button
+		Button backButton;
+		backButton = createButton(
+				(event) -> {
+					setStudentPage();
+				},
+				"Back", 15, 64, Pos.CENTER, 428, 40);
+		
+		if (type.equals("admin")) {
+			backButton.setOnAction((event) -> {
+				setAdminPage();
+			});
+		} else if (type.equals("instructor")) {
+			backButton.setOnAction((event) -> {
+				setInstructorPage();
+			});
+		}
+		
+		//Add all of the elements to the page
+		root.getChildren().addAll(title, groupName, groupField, fileName, fileNameField, wholeSystemButton, groupButton, backButton, errorMessage);
+		
+		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
+		
+		appStage.setScene(scene);
+		
+		appStage.show();
+	}
+	
+	/**
+	 * Creates the page for packing up articles and groups
+	 */
+	public static void setRestorePage(String type) {
+		Pane root = new Pane();
+		
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 270);
+		errorMessage.setTextFill(Color.RED);
+		
+		//The big title of the page
+		Label title = createLabel("Backup System", 30, 512, Pos.CENTER, 0, 0);
+		
+		Label fileName = createLabel("Import file:", 15, 512, Pos.CENTER, 0, 120);
+		Label fileNameImported = createLabel("", 15, 512, Pos.CENTER, 0, 140);
+		FileChooser fileNameChooser = new FileChooser();
+		
+		//Backs up the whole article system to a file
+		Button fileNameField = createButton(
+				(event) -> {
+					File file = fileNameChooser.showOpenDialog(appStage);
+					fileNameImported.setText(file.getName());
+				},
+				"Backup Whole System", 13, 158, Pos.CENTER, 180, 170);
+		
+		//Backs up the whole article system to a file
+		Button wholeSystemButton = createButton(
+				(event) -> {
+					databaseHelper.restoreArticles(fileNameImported.getText());
+					//File file = fileNameField.showOpenDialog();
+				},
+				"Backup Whole System", 13, 158, Pos.CENTER, 180, 170);
+		
+		//Update an article's info
+		Button groupButton = createButton(
+				(event) -> {
+					/*String group = groupField.getText();
+					String file = fileNameField.getText();
+					if (group.equals("") || file.equals("")) {
+						errorMessage.setText("Group and file must have a name!");
+					} else {
+						if (!databaseHelper.groupBackupArticles(file, group)) {
+							errorMessage.setText("Group name \"" + group + "\" does not exist!");
+						}
+					}*/
+				},
+			"Backup Group", 13, 158, Pos.CENTER, 180, 220);
+		
+		//Back button
+		Button backButton;
+		backButton = createButton(
+				(event) -> {
+					setStudentPage();
+				},
+				"Back", 15, 64, Pos.CENTER, 428, 40);
+		
+		if (type.equals("admin")) {
+			backButton.setOnAction((event) -> {
+				setAdminPage();
+			});
+		} else if (type.equals("instructor")) {
+			backButton.setOnAction((event) -> {
+				setInstructorPage();
+			});
+		}
+		
+		//Add all of the elements to the page
+		root.getChildren().addAll(title, fileName, fileNameField, wholeSystemButton, groupButton, backButton, errorMessage);
+		
+		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
+		
+		appStage.setScene(scene);
+		
+		appStage.show();
+	}
+	
+	/**
+	 * Creates the page for interacting with the article database
+	 */
+	public static void setArticleModPage(String type) {
 		Pane root = new Pane();
 		
 		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 270);
@@ -298,12 +462,22 @@ public class GUI extends Application {
 				},
 			"Delete Article", 13, 158, Pos.CENTER, 180, 190);
 		
-		//Logout button
-		Button backButton = createButton(
+		//Back button
+		Button backButton;
+		backButton = createButton(
 				(event) -> {
-					setAdminPage();
+					setStudentPage();
 				},
-			"Back", 15, 64, Pos.CENTER, 428, 40);
+				"Back", 15, 64, Pos.CENTER, 428, 40);
+		if (type.equals("admin")) {
+			backButton.setOnAction((event) -> {
+				setAdminPage();
+			});
+		} else if (type.equals("instructor")) {
+			backButton.setOnAction((event) -> {
+				setInstructorPage();
+			});
+		}
 		
 		//Add all of the elements to the page
 		root.getChildren().addAll(title, createButton, updateButton, viewButton, deleteButton, backButton, errorMessage);
@@ -562,7 +736,7 @@ public class GUI extends Application {
 		//Go to the article page
 		Button articlesButton = createButton(
 				(event) -> {
-					//setArticleInstructorPage();
+					//setArticleModPage("instructor");
 				},
 			"Articles", 13, 158, Pos.CENTER, 180, 70);
 		
@@ -678,6 +852,7 @@ public class GUI extends Application {
 				},
 			"Back to Login", 13, 128, Pos.CENTER, 194, 290);
 		
+		root.getChildren().addAll(title, emailTitle, emailInput);
 		//Add elements only if the database is not empty vs empty
 		if (!emptyDatabase)
 			root.getChildren().addAll(codeTitle, codeInput, tempPasswordTitle, tempPassword, backButton);
@@ -685,8 +860,7 @@ public class GUI extends Application {
 			root.getChildren().addAll(passwordTitle,
 					passwordInput, confirmPasswordTitle, confirmPasswordInput);
 		//Add items regardless of database
-		root.getChildren().addAll(title, emailTitle, emailInput,
-				createButton, errorMessage);
+		root.getChildren().addAll(createButton, errorMessage);
 		
 		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
 		
