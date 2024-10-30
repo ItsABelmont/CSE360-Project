@@ -45,7 +45,7 @@ public class ArticleTestBed {
 				return true; // Since the method doesn't return a boolean, we return true for simplicity.
 			});
 			
-			// Test deleting an article
+			// Test deleting an article/////
 			performTestCase(3, "Delete Article", () -> {
 				dbHelper.deleteArticle(1); // Assume the ID of the article to delete is 1
 				return true; // No way to verify directly here, so returning true for simplicity
