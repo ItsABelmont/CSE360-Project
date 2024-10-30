@@ -230,7 +230,7 @@ class DatabaseHelper {
 	 */
 	public void setPassword(String email, String password) {
 		try {
-			String query = "SELECT * FROM expire";
+			String query = "SELECT * FROM cse360users";
 			Statement stmt = connection.createStatement();
 			ResultSet rs = stmt.executeQuery(query);
 			

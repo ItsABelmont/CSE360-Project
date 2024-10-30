@@ -1,1 +1,3 @@
-5401861|TestTitle|TestGroup|Author1,Author2|TestAbstract|TestKeywords|TestBody|TestReferences|f
+3570995|Title 2|Group 2|a|a|k|BODY|R|f
+2415301|TestTitle|TestGroup|Author1,Author2|TestAbstract|TestKeywords|TestBody|TestReferences|f
+6129402|TestTitle|TestGroup|Author1,Author2|TestAbstract|TestKeywords|TestBody|TestReferences|f

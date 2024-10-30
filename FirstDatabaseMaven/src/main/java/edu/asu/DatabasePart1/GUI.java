@@ -1151,7 +1151,7 @@ public class GUI extends Application {
 	public static void setInstructorPage() {
 		Pane root = new Pane();
 		
-		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 0);
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 320);
 		errorMessage.setTextFill(Color.RED);
 		
 		//The big title of the page
@@ -1160,10 +1160,25 @@ public class GUI extends Application {
 		//Go to the article page
 		Button articlesButton = createButton(
 				(event) -> {
-					//setArticleModPage("instructor");
+					setArticleModPage("instructor");
 				},
-			"Articles", 13, 158, Pos.CENTER, 180, 70);
+			"Articles", 13, 158, Pos.CENTER, 180, 170);
 		
+		//Go to the restore page
+		Button backupButton = createButton(
+				(event) -> {
+					setBackupPage("instructor");
+				},
+			"Backup System", 13, 158, Pos.CENTER, 180, 220);
+		
+		//Go to the restore page
+		Button restoreButton = createButton(
+				(event) -> {
+					setRestorePage("instructor");
+				},
+			"Restore System", 13, 158, Pos.CENTER, 180, 270);
+		
+		//Logout button
 		Button logoutButton = createButton(
 				(event) -> {
 					setLoginPage();
@@ -1171,7 +1186,7 @@ public class GUI extends Application {
 			"Logout", 15, 64, Pos.CENTER, 438, 10);
 		
 		//Add all of the elements to the page
-		root.getChildren().addAll(title, logoutButton, articlesButton, errorMessage);
+		root.getChildren().addAll(title, articlesButton, backupButton, restoreButton, logoutButton, errorMessage);
 		
 		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
 		
@@ -1343,10 +1358,10 @@ public class GUI extends Application {
 		TextField preferredInput = createTextField("", 15, 128, Pos.CENTER, 256, 160);
 		
 		Label passwordTitle = createLabel("Password:", 15, 128, Pos.CENTER, 128, 190);
-		TextField passwordInput = createTextField("", 15, 128, Pos.CENTER, 256, 190);
+		TextField passwordInput = createPasswordField(15, 128, Pos.CENTER, 256, 190);
 		
 		Label password2Title = createLabel("Confirm Password:", 15, 128, Pos.CENTER, 128, 220);
-		TextField password2Input = createTextField("", 15, 128, Pos.CENTER, 256, 220);
+		TextField password2Input = createPasswordField(15, 128, Pos.CENTER, 256, 220);
 		
 		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 250);
 		errorMessage.setTextFill(Color.RED);
@@ -1354,12 +1369,13 @@ public class GUI extends Application {
 		Button continueButton = createButton(
 				(event) -> {
 					//When setting up an account, check to see if the password needs to be reset
-					if (databaseHelper.shouldUserReset(currentEmail)) {
+					if (databaseHelper.shouldUserReset(currentEmail) || databaseHelper.checkFinish(currentEmail)) {
 						if (passwordInput.getText().equals(password2Input.getText()))
 							databaseHelper.setPassword(currentEmail, passwordInput.getText());
-						else
+						else {
 							failCreateAccount(errorMessage, "Passwords do NOT match!");
 							return;
+						}
 					}
 					setupInformation(firstInput.getText(), middleInput.getText(), lastInput.getText(), preferredInput.getText());
 				},
@@ -1370,7 +1386,7 @@ public class GUI extends Application {
 				continueButton, errorMessage);
 		
 		//If the password needs to be reset, add the password input fields
-		if (databaseHelper.shouldUserReset(currentEmail))
+		if (databaseHelper.shouldUserReset(currentEmail) || databaseHelper.checkFinish(currentEmail))
 			root.getChildren().addAll(passwordTitle, passwordInput, password2Title, password2Input);
 		
 		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
