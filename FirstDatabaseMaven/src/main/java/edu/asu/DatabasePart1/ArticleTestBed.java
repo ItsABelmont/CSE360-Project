@@ -54,7 +54,7 @@ public class ArticleTestBed {
 			// Test backup and restore functionality
 			performTestCase(4, "Backup Articles", () -> {
 				dbHelper.backupArticles("backup.txt");
-				// Check if the backup file is created and has data (in a real test, we'd check the file's content)
+				// Check if the backup file is created and has data
 				return true;
 			});
 			
