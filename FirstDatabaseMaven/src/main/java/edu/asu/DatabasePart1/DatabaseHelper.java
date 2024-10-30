@@ -1038,14 +1038,14 @@ class DatabaseHelper {
 	
 	        try (FileWriter writer = new FileWriter(filename)) {
 	            while (rs.next()) {
-	                String data = rs.getLong("id") + "," +
-	                			  rs.getString("title") + "," +
-	                			  rs.getString("groupName") + "," +//each line gets added to the backup
-	                              rs.getString("authors") + "," +
-	                              rs.getString("abstract") + "," +
-	                              rs.getString("keywords") + "," +
-	                              rs.getString("body") + "," +
-	                              rs.getString("references") + "," +
+	                String data = rs.getLong("id") + "+" +
+	                			  rs.getString("title") + "+" +
+	                			  rs.getString("groupName") + "+" +//each line gets added to the backup
+	                              rs.getString("authors") + "+" +
+	                              rs.getString("abstract") + "+" +
+	                              rs.getString("keywords") + "+" +
+	                              rs.getString("body") + "+" +
+	                              rs.getString("references") + "+" +
 	                              rs.getString("delete");
 	                writer.write(data + "\n");
 	            }
@@ -1068,14 +1068,14 @@ class DatabaseHelper {
 	            while (rs.next()) {
 	            	if(rs.getString("groupName").equals(group)) {
 	            		outputValid = true;
-	            		String data = rs.getLong("id") + "," +
-	            					  rs.getString("title") + "," +
-	            					  rs.getString("groupName") + "," +//each line gets added to the backup
-	            					  rs.getString("authors") + "," +
-	            					  rs.getString("abstract") + "," +
-	            					  rs.getString("keywords") + "," +
-	            					  rs.getString("body") + "," +
-	            					  rs.getString("references") + "," +
+	            		String data = rs.getLong("id") + "+" +
+	            					  rs.getString("title") + "+" +
+	            					  rs.getString("groupName") + "+" +//each line gets added to the backup
+	            					  rs.getString("authors") + "+" +
+	            					  rs.getString("abstract") + "+" +
+	            					  rs.getString("keywords") + "+" +
+	            					  rs.getString("body") + "+" +
+	            					  rs.getString("references") + "+" +
 	            					  rs.getString("delete");
 	            		writer.write(data + "\n");
 	            	}
@@ -1102,7 +1102,7 @@ class DatabaseHelper {
 	    try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
 	        String line;
 	        while ((line = reader.readLine()) != null) {
-	            String[] values = line.split(",");
+	            String[] values = line.split("+");
 	            if (values.length == 9) {
 	                // Set parameters for update statement
 	                for (int i = 1; i < 9; i++) {
@@ -1140,7 +1140,7 @@ class DatabaseHelper {
 	        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
 	            String line;
 	            while ((line = reader.readLine()) != null) {
-	                String[] values = line.split(",");
+	                String[] values = line.split("+");
 	                if (values.length == 9) {
 	                    for (int i = 0; i < 9; i++) {
 	                        pstmt.setString(i + 1, values[i]); //reads through the lines adding back to the table
