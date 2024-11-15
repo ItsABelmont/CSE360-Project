@@ -4,11 +4,15 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.*;
+import java.util.Base64;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import Encryption.EncryptionHelper;
+import Encryption.EncryptionUtils;
 
 /**
  * </p> DatabaseHelper Class </p>
@@ -35,6 +39,7 @@ class DatabaseHelper {
 	public static String universalpreferredName = "";
 	public static String universalRole = "";
 
+	private EncryptionHelper encryptionHelper;
 	
 	private Connection connection = null;
 	private Statement statement = null; 
@@ -94,7 +99,33 @@ class DatabaseHelper {
 				+ "password VARCHAR(255), "
 				+ "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)";
 		statement.execute(expireTable); //initializes expire table
+		/*
+		 * Must encrypt the body of these articles later
+		 */
+		String specialArticleTable = "CREATE TABLE IF NOT EXISTS specialArticle ("
+				+ "id LONG UNIQUE, "
+				+ "title VARCHAR(255), "
+				+ "level VARCHAR(255), "
+				+ "groupName VARCHAR(255), "
+				+ "authors VARCHAR(1000), "
+				+ "abstract VARCHAR(10000), "
+				+ "keywords VARCHAR(1000), "
+				+ "encryptedBody VARCHAR(100000000), "
+				+ "references VARCHAR(10000)";
+		statement.execute(specialArticleTable);
+		String accessToSpecialArticles = "CREATE TABLE IF NOT EXISTS accessToSpecial ("
+				+ "userEmail VARCHAR(255),"
+				+ "userRole VARCHAR(255),"
+				+ "adminRights VARCHAR(255),"
+				+ "group VARCHAR(255)";
+		statement.execute(accessToSpecialArticles);
 		
+		try {
+			encryptionHelper = new EncryptionHelper();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		//these function checks all temp passwords to see if they expire and to delete them in 30 days
 		ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 		Runnable task = () -> {
@@ -959,7 +990,206 @@ class DatabaseHelper {
 		} 
 	}
 	
+	public boolean userExist(String email) {
+	    String query = "SELECT COUNT(*) FROM cse360users WHERE email = ?";
+	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+	        
+	        pstmt.setString(1, email);
+	        ResultSet rs = pstmt.executeQuery();
+	        
+	        if (rs.next()) {
+	            return rs.getInt(1) > 0;
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return false; // If an error occurs, assume user doesn't exist
+	}
 	//adds a new article
+	public boolean adminCreateSpecialGroup(String title, String level, String group, String authors, String abstrac, String keywords, String body, String references) {
+		/*
+		 * encrypt body here somehow
+		 * and get user info
+		 */
+		String userEmail = "";
+		
+		addUserAccessSpecial(userEmail, "admin", group);
+		
+		/*
+		 * Encrypt the body
+		 */
+		try {
+			//random unique long can change right limit for longer long
+			Random random = new Random();
+	        long leftLimit = 1L;
+	        long rightLimit = 10000000L;
+	        long randomLong = leftLimit + (long) (random.nextDouble() * (rightLimit - leftLimit));
+			String insertUser = "INSERT INTO  specialArticle (id, title, level, groupName, authors, abstract, keywords, encryptedBody, references) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+			try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
+				pstmt.setLong(1, randomLong);
+				pstmt.setString(2, title);
+				pstmt.setString(3, level);
+				pstmt.setString(4, group);
+				pstmt.setString(5, authors);
+				pstmt.setString(6, abstrac);
+				pstmt.setString(7, keywords);
+				pstmt.setString(8, body);
+				pstmt.setString(9, references);
+				pstmt.executeUpdate();
+			}
+			
+			return true;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		
+		
+		return false;
+	}
+	
+	public boolean addToSpecialGroup(String title, String level, String group, String authors, String abstrac, String keywords, String body, String references) {
+		
+		String userEmail = "";
+		/*
+		String encryptedBody = body;
+		
+		try {
+			encryptedBody = Base64.getEncoder().encodeToString(
+					encryptionHelper.encrypt(body.getBytes(), EncryptionUtils.getInitializationVector(group.toCharArray()))
+			);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		char[] decryptedPassword = null;
+		try {
+			decryptedPassword = EncryptionUtils.toCharArray(
+					encryptionHelper.decrypt(
+							Base64.getDecoder().decode(
+									encryptedBody
+							), 
+							EncryptionUtils.getInitializationVector(group.toCharArray())
+					)	
+			);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		EncryptionUtils.printCharArray(decryptedPassword);
+		*/
+		if(doesUserHaveAccess(userEmail, group)) {
+			
+			try {
+				//random unique long can change right limit for longer long
+				Random random = new Random();
+		        long leftLimit = 1L;
+		        long rightLimit = 10000000L;
+		        long randomLong = leftLimit + (long) (random.nextDouble() * (rightLimit - leftLimit));
+				String insertUser = "INSERT INTO  specialArticle (id, title, level, groupName, authors, abstract, keywords, encryptedBody, references) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+				try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
+					pstmt.setLong(1, randomLong);
+					pstmt.setString(2, title);
+					pstmt.setString(3, level);
+					pstmt.setString(4, group);
+					pstmt.setString(5, authors);
+					pstmt.setString(6, abstrac);
+					pstmt.setString(7, keywords);
+					pstmt.setString(8, body);
+					pstmt.setString(9, references);
+					pstmt.executeUpdate();
+				}
+				
+				return true;
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			
+		}
+		
+		return false;
+	}
+	
+	public boolean decryptSpecialAccess(String userEmail, String group) {
+		
+		if(doesUserHaveAccess(userEmail, group)) {
+			/*
+			 * decrypt or something
+			 */
+		}
+		
+		return false;
+		
+	}
+	
+	public boolean doesUserHaveAccess(String userEmail, String group) {
+		
+		try {
+			String sql = "SELECT * FROM accessToSpecial"; 
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(sql); 
+	
+			while(rs.next()) { 
+				if(rs.getString("userEmail").equals(userEmail)) {
+					return true;
+				}
+			} 
+		}catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	public boolean addUserAccessSpecial(String userEmail, String userRole, String group) {
+		
+		/*
+		 * check to see if the user has that role
+		 */
+		
+		if(userExist(userEmail)) {
+			String insertUser = "INSERT INTO  accessToSpecial (userEmail, userRole, adminRights, group) VALUES (?, ?, ?, ?)";
+			try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
+				pstmt.setString(1, userEmail);
+				pstmt.setString(2, userRole);
+				
+				if(checkForFirstInstructor(group))
+					pstmt.setString(3, "t");
+				else 
+					pstmt.setString(3, "f");
+				
+				pstmt.setString(4, group);
+				pstmt.executeUpdate();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		return false;
+	}
+	
+	public boolean checkForFirstInstructor(String group) {
+		
+		try {
+			String sql = "SELECT * FROM accessToSpecial"; 
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(sql); 
+	
+			while(rs.next()) { 
+				if(rs.getString("group").equals(group) && rs.getString("userRole").equals("instructor") && rs.getString("adminRights").equals("t")) {
+					return false;
+				}
+			} 
+		}catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return true;
+	}
+	
+	
 	public boolean addArticle(String title, String group, String authors, String abstrac, String keywords, String body, String references) {
 		try {
 			//random unique long can change right limit for longer long
