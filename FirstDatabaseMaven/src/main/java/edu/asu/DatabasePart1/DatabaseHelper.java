@@ -29,7 +29,7 @@ class DatabaseHelper {
 
 	// JDBC driver name and database URL 
 	static final String JDBC_DRIVER = "org.h2.Driver";
-	static final String DB_URL = "jdbc:h2:~/firstDatabase";
+	static final String DB_URL = "jdbc:h2:~/helpSystemDatabase";
 
 	//  Database credentials 
 	static final String USER = "sa"; 
@@ -111,13 +111,13 @@ class DatabaseHelper {
 				+ "abstract VARCHAR(10000), "
 				+ "keywords VARCHAR(1000), "
 				+ "encryptedBody VARCHAR(100000000), "
-				+ "references VARCHAR(10000)";
+				+ "references VARCHAR(10000))";
 		statement.execute(specialArticleTable);
 		String accessToSpecialArticles = "CREATE TABLE IF NOT EXISTS accessToSpecial ("
 				+ "userEmail VARCHAR(255),"
 				+ "userRole VARCHAR(255),"
 				+ "adminRights VARCHAR(255),"
-				+ "group VARCHAR(255)";
+				+ "groupName VARCHAR(255))";
 		statement.execute(accessToSpecialArticles);
 		
 		try {
@@ -1149,7 +1149,7 @@ class DatabaseHelper {
 		 */
 		
 		if(userExist(userEmail)) {
-			String insertUser = "INSERT INTO  accessToSpecial (userEmail, userRole, adminRights, group) VALUES (?, ?, ?, ?)";
+			String insertUser = "INSERT INTO  accessToSpecial (userEmail, userRole, adminRights, groupName) VALUES (?, ?, ?, ?)";
 			try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
 				pstmt.setString(1, userEmail);
 				pstmt.setString(2, userRole);
@@ -1178,7 +1178,7 @@ class DatabaseHelper {
 			ResultSet rs = stmt.executeQuery(sql); 
 	
 			while(rs.next()) { 
-				if(rs.getString("group").equals(group) && rs.getString("userRole").equals("instructor") && rs.getString("adminRights").equals("t")) {
+				if(rs.getString("groupName").equals(group) && rs.getString("userRole").equals("instructor") && rs.getString("adminRights").equals("t")) {
 					return false;
 				}
 			} 
