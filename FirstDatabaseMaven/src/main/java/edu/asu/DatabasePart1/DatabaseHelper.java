@@ -970,7 +970,7 @@ class DatabaseHelper {
 	 * This method performs a given action looping through every accessible article
 	 * @param method
 	 */
-	public void forEachSpecialArticle(ArticleMethod method, String email) {
+	public void forEachSpecialArticle(ArticleMethod method, String email, String role) {
 		String sql = "SELECT * FROM specialarticles";
 		
 		try {
@@ -979,7 +979,7 @@ class DatabaseHelper {
 	
 			int i = 0;
 			while(rs.next()) {
-				if (this.doesUserHaveAccess(email, rs.getString("groupName"))) {
+				if (this.doesHaveAdminAccessSpecial(email, role, rs.getString("groupName"))) {
 					// Retrieve by column name 
 					int id  = rs.getInt("id");
 					

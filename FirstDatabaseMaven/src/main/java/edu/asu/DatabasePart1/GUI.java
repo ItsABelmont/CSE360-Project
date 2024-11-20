@@ -512,35 +512,54 @@ public class GUI extends Application {
 		ScrollPane scrollPane = new ScrollPane();
 		scrollPane.setContent(root);
 		
-		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 560);
+		Label errorMessage = createLabel("", 15, 500, Pos.CENTER, 6, 560);
 		errorMessage.setTextFill(Color.RED);
 		
 		//The big title of the page
-		Label title = createLabel("Create Article", 30, 512, Pos.CENTER, 0, 0);
+		Label title = createLabel("Create Article", 30, 500, Pos.CENTER, 6, 0);
 		
-		Label titleName = createLabel("Title:", 12, 512, Pos.CENTER, 0, 40);
-		TextField titleNameField = createTextField("", 15, 512, Pos.CENTER, 0, 55);
+		Label titleName = createLabel("Title:", 12, 500, Pos.CENTER, 6, 40);
+		TextField titleNameField = createTextField("", 15, 500, Pos.CENTER, 6, 55);
 		
-		Label groupName = createLabel("Group:", 12, 512, Pos.CENTER, 0, 90);
-		TextField groupNameField = createTextField("", 15, 512, Pos.CENTER, 0, 105);
+		Label groupName = createLabel("Group:", 12, 500, Pos.CENTER, 6, 90);
+		TextField groupNameField = createTextField("", 15, 500, Pos.CENTER, 6, 105);
+		groupNameField.textProperty().addListener((event, old, newString) -> {
+			
+		});
 		
-		Label authorsName = createLabel("Authors:", 12, 512, Pos.CENTER, 0, 130);
-		TextField authorsNameField = createTextField("", 15, 512, Pos.CENTER, 0, 145);
 		
-		Label abstractName = createLabel("Abstract:", 12, 512, Pos.CENTER, 0, 170);
-		TextField abstractNameField = createTextField("", 15, 512, Pos.CENTER, 0, 185);
+		CheckBox specialGroup = createCheckBox("Special Group", 12, 128, Pos.CENTER, 6, 90);
+		numGroups = 0;
+		specialGroup.setOnAction((event)-> {
+			if (specialGroup.isSelected()) {
+//				databaseHelper.forEachSpecialArticle((id, titleArticle, group, author, abstrac, keywords, body, references, i) -> {
+//					if (group.equals(groupNameField.getText())) {
+//						numGroups = 1;
+//					}
+//				});
+//				if (numGroups == 0) {
+//					specialGroup.setSelected(false);
+//				}
+			}
+		});
 		
-		Label keywordsName = createLabel("Keywords:", 12, 512, Pos.CENTER, 0, 210);
-		TextField keywordsNameField = createTextField("", 15, 512, Pos.CENTER, 0, 225);
+		Label authorsName = createLabel("Authors:", 12, 500, Pos.CENTER, 6, 130);
+		TextField authorsNameField = createTextField("", 15, 500, Pos.CENTER, 6, 145);
+		
+		Label abstractName = createLabel("Abstract:", 12, 500, Pos.CENTER, 6, 170);
+		TextField abstractNameField = createTextField("", 15, 500, Pos.CENTER, 6, 185);
+		
+		Label keywordsName = createLabel("Keywords:", 12, 500, Pos.CENTER, 6, 210);
+		TextField keywordsNameField = createTextField("", 15, 500, Pos.CENTER, 6, 225);
 		
 		//The body is unique and therefore has it's own TextArea
-		Label bodyName = createLabel("Body:", 12, 512, Pos.CENTER, 0, 250);
-		TextArea bodyNameField = createTextArea("", 15, 312, true, 0, 270);
+		Label bodyName = createLabel("Body:", 12, 500, Pos.CENTER, 6, 250);
+		TextArea bodyNameField = createTextArea("", 15, 300, true, 6, 270);
 		bodyNameField.setMaxWidth(512);
 		bodyNameField.setMinHeight(70);
 		
-		Label referencesName = createLabel("References:", 12, 512, Pos.CENTER, 0, 480);
-		TextField referencesNameField = createTextField("", 15, 512, Pos.CENTER, 0, 495);
+		Label referencesName = createLabel("References:", 12, 500, Pos.CENTER, 6, 480);
+		TextField referencesNameField = createTextField("", 15, 500, Pos.CENTER, 6, 495);
 		
 		
 		//Restores the system from a button click
@@ -549,10 +568,14 @@ public class GUI extends Application {
 					if (titleNameField.getText().equals("") || groupNameField.getText().equals("") || authorsNameField.getText().equals("") || abstractNameField.getText().equals("") || keywordsNameField.getText().equals("") || bodyNameField.getText().equals("") || referencesNameField.getText().equals("")) {
 						errorMessage.setText("Cannot leave fields blank");
 					} else {
-						if (databaseHelper.addArticle(titleNameField.getText(), groupNameField.getText(), authorsNameField.getText(), abstractNameField.getText(), keywordsNameField.getText(), bodyNameField.getText(), referencesNameField.getText())) {
-							setArticleModPage(type);
+						if (specialGroup.isSelected()) {
+							
 						} else {
-							errorMessage.setText("Error creating article");
+							if (databaseHelper.addArticle(titleNameField.getText(), groupNameField.getText(), authorsNameField.getText(), abstractNameField.getText(), keywordsNameField.getText(), bodyNameField.getText(), referencesNameField.getText())) {
+								setArticleModPage(type);
+							} else {
+								errorMessage.setText("Error creating article");
+							}
 						}
 					}
 				},
@@ -899,7 +922,10 @@ public class GUI extends Application {
 		Button backButton;
 		backButton = createButton(
 				(event) -> {
-					setViewArticlesPage(type);
+					if (type.equals("admin"))
+						setViewArticlesPage(type);
+					else if (type.equals("student"))
+						setSearchPage(type);
 				},
 				"Back", 15, 64, Pos.CENTER, 428, 20);
 		
@@ -1375,8 +1401,8 @@ public class GUI extends Application {
 		
 		root.getChildren().addAll(beginnerBox, intermediateBox, advancedBox, expertBox, allBox);
 		
-		Label keywordLabel = createLabel("Keywords:", 15, 512, Pos.CENTER, 0, 180);
-		TextField keywords = createTextField("", 15, 512, Pos.CENTER, 0, 210);
+		Label keywordLabel = createLabel("Keywords:", 15, 500, Pos.CENTER, 6, 150);
+		TextField keywords = createTextField("", 15, 500, Pos.CENTER, 6, 180);
 		
 		ArrayList<String> groups = new ArrayList<String>();
 		
@@ -1396,6 +1422,7 @@ public class GUI extends Application {
 		
 		ArrayList<CheckBox> groupBoxes = new ArrayList<CheckBox>();
 		CheckBox allGroupBox = createCheckBox("All Groups", 15, 128, Pos.CENTER, 192 + 64, 240);
+		allGroupBox.setSelected(true);
 		root.getChildren().add(allGroupBox);
 		
 		for (int i = 0; i < groups.size(); i++) {
@@ -1418,8 +1445,14 @@ public class GUI extends Application {
 		
 		Button searchButton = createButton(
 				(event) -> {
+					ArrayList<String> groupSearched = new ArrayList<String>();
+					for (CheckBox b : groupBoxes) {
+						if (b.isSelected())
+							groupSearched.add(b.getText());
+					}
+					
 					searchHistory.add(keywords.getText());
-					setSearchingPage(keywords.getText(),
+					setSearchingPage(keywords.getText(), groupSearched,
 							beginnerBox.isSelected(), 
 							intermediateBox.isSelected(),
 							advancedBox.isSelected(),
@@ -1450,7 +1483,7 @@ public class GUI extends Application {
 	/**
 	 * This method sets up the student article search page
 	 */
-	public static void setSearchingPage(String keywords, boolean beginner, boolean intermediate, boolean advanced, boolean expert, String type) {
+	public static void setSearchingPage(String keywords, ArrayList<String> groupSearched, boolean beginner, boolean intermediate, boolean advanced, boolean expert, String type) {
 		Pane root = new Pane();
 		
 		ScrollPane scroll = new ScrollPane();
@@ -1465,7 +1498,33 @@ public class GUI extends Application {
 		ArrayList<String> groups = new ArrayList<String>();
 		int[] numDifficulty = new int[4];
 		
+		ArrayList<Article> articlesSearched = new ArrayList<Article>();
+		
+		numGroups = 0;
 		databaseHelper.forEachArticle((id, title, group, author, abstrac, keywordsArticle, body, references, i) -> {
+			boolean found = false;
+			for (String str : groupSearched) {
+				if (str.equals(group)) {
+					found = true;
+					break;
+				}
+			}
+			if (!found)
+				return;
+			
+			found = false;
+			if (!keywords.equals("")) {
+				String[] realKeywords = splitKeywordSearch(keywords);
+				for (String str : realKeywords) {
+					if (title.contains(str) || author.contains(str) || abstrac.contains(str) || keywordsArticle.contains(str)) {
+						found = true;
+						break;
+					}
+				}
+				if (!found)
+					return;
+			}
+			
 			boolean test = false;
 			if (keywordsArticle.toLowerCase().contains("beginner")) {
 				numDifficulty[0]++;
@@ -1488,17 +1547,18 @@ public class GUI extends Application {
 					return;
 			}
 			
-			
-			
 			//Add displayed groups to the list of groups at the top
 			for (String str : groups) {
-				if (str == group) {
+				if (str.equals(group)) {
 					test = true;
 					break;
 				}
 			}
 			if (!test)
 				groups.add(group);
+			
+			numGroups++;
+			articlesSearched.add(new Article(id, title, group, author, abstrac, keywordsArticle, body, references));
 		});
 		
 		Label allGroups = createLabel("Groups:", 20, 500, Pos.CENTER, 6, 70);
@@ -1524,6 +1584,19 @@ public class GUI extends Application {
 			root.getChildren().add(advancedArticles);
 		if (expert)
 			root.getChildren().add(expertArticles);
+		
+		currentHeight += 45;
+		int articleNum = 1;
+		for (Article a : articlesSearched) {
+			Label l = createLabel(articleNum + ",\t" + a.title + ",\t" + a.authors + ":\n" + a.abstrac, 15, 500, Pos.BASELINE_LEFT, 6, currentHeight);
+			Button b = createButton((event) -> {
+				setArticleViewPage(type, a.id);
+			}, "View", 15, 128, Pos.CENTER, 300, currentHeight);
+			articleNum++;
+			currentHeight += 60;
+			
+			root.getChildren().addAll(l, b);
+		}
 		
 		Button backButton = createButton(
 				(event) -> {
