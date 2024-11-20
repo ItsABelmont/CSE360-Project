@@ -62,7 +62,7 @@ public class DatabaseHelperTestBed {
             return dbHelper.doesUserExist("testuser@example.com", "student");
         });
         
-        
+        //Add a new article
         performTestCase(6, "Admin Create Special Group", () -> {
             // Test setup
             String userEmail = "testuser@example.com";
