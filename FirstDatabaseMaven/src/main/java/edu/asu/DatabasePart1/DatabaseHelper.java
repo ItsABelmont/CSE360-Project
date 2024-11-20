@@ -912,6 +912,32 @@ class DatabaseHelper {
 	 * This method performs a given action looping through every user
 	 * @param method
 	 */
+	
+	//In order for this to work we need group name current user email and current user role to check if they have admin access
+	public boolean doesHaveAdminAccessSpecial(String email, String role, String groupName) {
+		
+		String sql = "SELECT * FROM accessToSpecial";
+		
+		try {
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(sql); 
+		
+			while(rs.next()) {
+				if(rs.getString("userEmail").equals(email) && rs.getString("userRole").equals(role) && rs.getString("groupName").equals(groupName) && rs.getString("adminRights").equals("t")) {
+					return true;
+				}
+			}
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+
+		}
+		
+		return false;
+		
+	}
+	
+	
 	public void forEachArticle(ArticleMethod method) {
 		String sql = "SELECT * FROM articles";
 		
