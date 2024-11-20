@@ -62,15 +62,46 @@ public class DatabaseHelperTestBed {
             return dbHelper.doesUserExist("testuser@example.com", "student");
         });
         
+        
+        performTestCase(6, "Admin Create Special Group", () -> {
+            // Test setup
+            String userEmail = "testuser@example.com";
+            String title = "a";
+            String level = "b";
+            String group = "c";
+            String authors = "d";
+            String abstrac = "e";
+            String keywords = "test1, test2";
+            String body = "Body";
+            String references = "Reference 1";
+            
+            // Perform the operation
+            return dbHelper.adminCreateSpecialGroup(userEmail, title, level, group, authors, abstrac, keywords, body, references);
+            
+        });
+        
+        //Add User Access
+        performTestCase(7, "Check if user has that role", () -> {
+       	String userEmail = "testuser@example.com";
+       	String userRole = "student";
+       	String group = "CSE360";
+       	
+        	return dbHelper.addUserAccessSpecial(userEmail, userRole, group);
+       	
+      });
+     
+        
         // Print the number of successful and failed test cases
         System.out.println();
         System.out.println("Number of tests passed: " + numPassed);
         System.out.println("Number of tests failed: " + numFailed);
 
         dbHelper.closeConnection(); // Close the connection
+        
+    
     }
 
-    /**
+	/**
      * This is the method that performs test cases to make sure DatabaseHelper works properly
      * @param testCase Test case number
      * @param description A description of the testCase
@@ -98,4 +129,6 @@ public class DatabaseHelperTestBed {
     interface TestMethod {
         boolean run() throws Exception;
     }
+    
+    
 }

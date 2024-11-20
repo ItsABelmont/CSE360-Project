@@ -1097,14 +1097,13 @@ class DatabaseHelper {
 	    return false; // If an error occurs, assume user doesn't exist
 	}
 	//adds a new article
-	public boolean adminCreateSpecialGroup(String title, String level, String group, String authors, String abstrac, String keywords, String body, String references) {
+	public boolean adminCreateSpecialGroup(String userEmail, String title, String level, String group, String authors, String abstrac, String keywords, String body, String references) {
 		/*
 		 * encrypt body here somehow
 		 * and get user info
 		 */
-		String userEmail = "";
 		
-		addUserAccessSpecial(userEmail, "admin", group);
+		addUserAccessSpecial(userEmail, "instructor", group);
 		
 		/*
 		 * Encrypt the body
