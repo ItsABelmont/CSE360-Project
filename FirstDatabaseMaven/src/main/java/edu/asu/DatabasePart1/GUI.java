@@ -243,7 +243,7 @@ public class GUI extends Application {
 		//Go to the list users page
 		Button listUsersButton = createButton(
 				(event) -> {
-					setListUsersPage();
+					setListUsersPage("admin");
 				},
 			"List Users", 13, 158, Pos.CENTER, 180, 120);
 		
@@ -276,7 +276,7 @@ public class GUI extends Application {
 			"Logout", 15, 64, Pos.CENTER, 438, 10);
 		
 		//Add all of the elements to the page
-		root.getChildren().addAll(title, generateCodeButton, listUsersButton, /*articlesButton, */backupButton, restoreButton, logoutButton, errorMessage);
+		root.getChildren().addAll(title, generateCodeButton, listUsersButton, articlesButton, backupButton, restoreButton, logoutButton, errorMessage);
 		
 		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
 		
@@ -523,24 +523,42 @@ public class GUI extends Application {
 		
 		Label groupName = createLabel("Group:", 12, 500, Pos.CENTER, 6, 90);
 		TextField groupNameField = createTextField("", 15, 500, Pos.CENTER, 6, 105);
-		groupNameField.textProperty().addListener((event, old, newString) -> {
-			
+		
+		CheckBox specialGroup = createCheckBox("Special Group", 12, 128, Pos.CENTER, 6, 85);
+		specialGroup.setOnAction((event)-> {
+			numGroups = 0;
+			databaseHelper.forEachArticle((id, titleArticle, group, author, abstrac, keywords, body, references, i) -> {
+				if (group.equals(groupNameField.getText())) {
+					numGroups = 1;
+				}
+			});
+			databaseHelper.forEachSpecialArticle((id, titleArticle, group, author, abstrac, keywords, body, references, i) -> {
+				if (group.equals(groupNameField.getText())) {
+					numGroups = 2;
+				}
+			});
+			if (numGroups == 1)
+				specialGroup.setSelected(false);
+			if (numGroups == 2)
+				specialGroup.setSelected(true);
 		});
 		
-		
-		CheckBox specialGroup = createCheckBox("Special Group", 12, 128, Pos.CENTER, 6, 90);
-		numGroups = 0;
-		specialGroup.setOnAction((event)-> {
-			if (specialGroup.isSelected()) {
-//				databaseHelper.forEachSpecialArticle((id, titleArticle, group, author, abstrac, keywords, body, references, i) -> {
-//					if (group.equals(groupNameField.getText())) {
-//						numGroups = 1;
-//					}
-//				});
-//				if (numGroups == 0) {
-//					specialGroup.setSelected(false);
-//				}
-			}
+		groupNameField.textProperty().addListener((event, oldString, newString) -> {
+			numGroups = 0;
+			databaseHelper.forEachArticle((id, titleArticle, group, author, abstrac, keywords, body, references, i) -> {
+				if (group.equals(newString)) {
+					numGroups = 1;
+				}
+			});
+			databaseHelper.forEachSpecialArticle((id, titleArticle, group, author, abstrac, keywords, body, references, i) -> {
+				if (group.equals(newString)) {
+					numGroups = 2;
+				}
+			});
+			if (numGroups == 1)
+				specialGroup.setSelected(false);
+			if (numGroups == 2)
+				specialGroup.setSelected(true);
 		});
 		
 		Label authorsName = createLabel("Authors:", 12, 500, Pos.CENTER, 6, 130);
@@ -569,7 +587,26 @@ public class GUI extends Application {
 						errorMessage.setText("Cannot leave fields blank");
 					} else {
 						if (specialGroup.isSelected()) {
-							
+							numGroups = 0;
+							databaseHelper.forEachSpecialArticle((id, titleArticle, group, author, abstrac, keywords, body, references, i) -> {
+								if (group == groupNameField.getText())
+									numGroups = 1;
+							});
+							boolean success = false;
+							if (numGroups == 0 || databaseHelper.doesHaveAdminAccessSpecial(currentEmail, type, groupNameField.getText())) {
+								if (numGroups == 0)
+									success = databaseHelper.adminCreateSpecialGroup(currentEmail, type, titleNameField.getText(), "", groupNameField.getText(), authorsNameField.getText(), abstractNameField.getText(), keywordsNameField.getText(), bodyNameField.getText(), referencesNameField.getText());
+								else
+									success = databaseHelper.addToSpecialGroup(currentEmail, titleNameField.getText(), "", groupNameField.getText(), authorsNameField.getText(), abstractNameField.getText(), keywordsNameField.getText(), bodyNameField.getText(), referencesNameField.getText());
+								System.out.println(numGroups);
+								if (success) {
+										setArticleModPage(type);
+								} else {
+									errorMessage.setText("Error creating article");
+								}
+							} else {
+								errorMessage.setText("No access to this group");
+							}
 						} else {
 							if (databaseHelper.addArticle(titleNameField.getText(), groupNameField.getText(), authorsNameField.getText(), abstractNameField.getText(), keywordsNameField.getText(), bodyNameField.getText(), referencesNameField.getText())) {
 								setArticleModPage(type);
@@ -594,7 +631,7 @@ public class GUI extends Application {
 				groupNameField, authorsName, authorsNameField, abstractName, abstractNameField, 
 				keywordsName, keywordsNameField, bodyName, bodyNameField, 
 				referencesName, referencesNameField, 
-				createButton, backButton, errorMessage);
+				createButton, specialGroup, backButton, errorMessage);
 		
 		Scene scene = new Scene(scrollPane, WINDOW_WIDTH, WINDOW_HEIGHT);
 		
@@ -622,9 +659,13 @@ public class GUI extends Application {
 		Label groupsName = createLabel("Type the name of each group you want to display, separated by commas:", 12, 512, Pos.CENTER, 0, 40);
 		
 		//Get how many total groups are there
+		numGroups = 0;
 		databaseHelper.forEachArticle((id, titleName, group, author, abstrac, keywords, body, references, i) -> {
-			numGroups = i + 1;
+			numGroups++;
 		});
+		databaseHelper.forEachSpecialArticle((id, titleName, group, author, abstrac, keywords, body, references, i) -> {
+			numGroups++;
+		}, currentEmail, type);
 		//If there are no groups, skip this page
 		if (numGroups <= 0) {
 			setViewArticlesPage(type, null);
@@ -657,36 +698,58 @@ public class GUI extends Application {
 				numGroups++;
 			}
 		});
+		databaseHelper.forEachSpecialArticle((id, titleName, group, author, abstrac, keywords, body, references, i) -> {
+			boolean duplicate = false;
+			for (int u = 0; u < numGroups; u++) {
+				if (group.equals(allGroups[u])) {
+					duplicate = true;
+				}
+			}
+			
+			if (!duplicate) {
+				allGroups[numGroups] = group;
+				
+				CheckBox groupName = createCheckBox(group, 25, 256, Pos.TOP_LEFT, 156, numGroups * 45 + 60);
+				groupName.setSelected(true);
+				
+				//Add the CheckBox to a reference array for later
+				groupChecks[numGroups] = groupName;
+				
+				root.getChildren().addAll(groupName);
+				
+				numGroups++;
+			}
+		}, currentEmail, type);
 		
 		//Restores the system from a button click
 		Button createButton = createButton(
-				(event) -> {
-					String[] finalGroups;
-					int groupNum = 0;
-					int u = 0;
-					//Determine how many groups are selected
-					while (u < groupChecks.length && groupChecks[u] != null) {
-						if (groupChecks[u].isSelected())
-							groupNum++;
-						u++;
+			(event) -> {
+				String[] finalGroups;
+				int groupNum = 0;
+				int u = 0;
+				//Determine how many groups are selected
+				while (u < groupChecks.length && groupChecks[u] != null) {
+					if (groupChecks[u].isSelected())
+						groupNum++;
+					u++;
+				}
+				//Make an array of the correct length
+				finalGroups = new String[groupNum];
+				u = 0;
+				int o = 0;
+				//Now loop through the created array and add every checked group to it
+				while (u < groupChecks.length && groupChecks[u] != null) {
+					if (groupChecks[u].isSelected()) {
+						finalGroups[o] = groupChecks[u].getText();
+						o++;
 					}
-					//Make an array of the correct length
-					finalGroups = new String[groupNum];
-					u = 0;
-					int o = 0;
-					//Now loop through the created array and add every checked group to it
-					while (u < groupChecks.length && groupChecks[u] != null) {
-						if (groupChecks[u].isSelected()) {
-							finalGroups[o] = groupChecks[u].getText();
-							o++;
-						}
-						u++;
-					}
-					
-					//Start the view page with the String[] of which groups to display
-					setViewArticlesPage(type, finalGroups);
-				},
-				"Continue", 13, 158, Pos.CENTER, 180, 45 * numGroups + 90);
+					u++;
+				}
+				
+				//Start the view page with the String[] of which groups to display
+				setViewArticlesPage(type, finalGroups);
+			},
+			"Continue", 13, 158, Pos.CENTER, 180, 45 * numGroups + 90);
 		
 		//Back button
 		Button backButton;
@@ -752,13 +815,13 @@ public class GUI extends Application {
 				
 				Button viewButton = createButton(//View button
 						(event) -> {
-							setArticleViewPage(type, id);
+							setArticleViewPage(type, id, false);
 						},
 					"View", 15, 64, Pos.CENTER, 278, numGroups * 30 + 50);
 				
 				Button updateButton = createButton(//Edit button
 						(event) -> {
-							setArticleUpdatePage(type, id);
+							setArticleUpdatePage(type, id, false);
 						},
 					"Update", 15, 64, Pos.CENTER, 358, numGroups * 30 + 50);
 				
@@ -767,12 +830,15 @@ public class GUI extends Application {
 					"Delete", 15, 64, Pos.CENTER, 438, numGroups * 30 + 50);
 				//Delete the article on click and stop displaying it in the GUI
 				deleteArticleButton.setOnAction((event) -> {
-					databaseHelper.deleteArticle(id);
-					user.setVisible(false);
-					groupName.setVisible(false);
-					viewButton.setVisible(false);
-					updateButton.setVisible(false);
-					deleteArticleButton.setVisible(false);
+					if (databaseHelper.deleteArticle(id)) {
+						user.setVisible(false);
+						groupName.setVisible(false);
+						viewButton.setVisible(false);
+						updateButton.setVisible(false);
+						deleteArticleButton.setVisible(false);
+					} else {
+						errorMessage.setText("Error deleting article");
+					}
 				});
 				
 				root.getChildren().addAll(user, groupName, viewButton, updateButton, deleteArticleButton);
@@ -780,6 +846,54 @@ public class GUI extends Application {
 				numGroups++;
 			}
 		});
+		databaseHelper.forEachSpecialArticle((id, titleName, group, author, abstrac, keywords, body, references, i) -> {
+			boolean found = false;
+			if (groups != null) {
+				for (int u = 0; u < groups.length; u++) {
+					if (groups[u].equals(group))
+						found = true;
+				}
+			}
+			if (groups == null || found) {
+				Label user = createLabel(titleName/* + " (By " + author + ")"*/, 13, 256, Pos.TOP_LEFT, 30, numGroups * 30 + 50);
+				Label groupName = createLabel("Group: " + group, 13, 256, Pos.TOP_LEFT, 156, numGroups * 30 + 50);
+				
+				Button viewButton = createButton(//View button
+						(event) -> {
+							setArticleViewPage(type, id, true);
+						},
+					"View", 15, 64, Pos.CENTER, 278, numGroups * 30 + 50);
+				
+				Button updateButton = createButton(//Edit button
+						(event) -> {
+							setArticleUpdatePage(type, id, true);
+						},
+					"Update", 15, 64, Pos.CENTER, 358, numGroups * 30 + 50);
+				
+				Button deleteArticleButton = createButton(//Delete button
+						(event) -> {},
+					"Delete", 15, 64, Pos.CENTER, 438, numGroups * 30 + 50);
+				//Delete the article on click and stop displaying it in the GUI
+				deleteArticleButton.setOnAction((event) -> {
+					if (databaseHelper.deleteSpecialArticle(currentEmail, type, id)) {
+						user.setVisible(false);
+						groupName.setVisible(false);
+						viewButton.setVisible(false);
+						updateButton.setVisible(false);
+						deleteArticleButton.setVisible(false);
+					} else {
+						errorMessage.setText("Error deleting article");
+					}
+				});
+				
+				root.getChildren().addAll(user, groupName, viewButton);
+				if (databaseHelper.doesHaveAdminAccessSpecial(currentEmail, type, group)) {
+					root.getChildren().addAll(updateButton, deleteArticleButton);
+				}
+				
+				numGroups++;
+			}
+		}, currentEmail, type);
 		
 		//Go back to the admin page with a button press
 		Button backButton = createButton(
@@ -803,8 +917,12 @@ public class GUI extends Application {
 	 * @param type
 	 * @param id
 	 */
-	public static void setArticleUpdatePage(String type, long id) {
-		Article article = databaseHelper.getArticle(id);
+	public static void setArticleUpdatePage(String type, long id, boolean special) {
+		Article article;
+		if (special) {
+			article = databaseHelper.getSpecialArticle(id);
+		} else
+			article = databaseHelper.getArticle(id);
 		
 		Pane root = new Pane();
 		
@@ -844,10 +962,15 @@ public class GUI extends Application {
 		//Saves the newly created article
 		Button createButton = createButton(
 				(event) -> {
-					if (databaseHelper.updateArticle(id, titleNameField.getText(), groupNameField.getText(), authorsNameField.getText(), abstractNameField.getText(), keywordsNameField.getText(), bodyNameField.getText(), referencesNameField.getText())) {
+					boolean success = false;
+					if (special) {
+						success = databaseHelper.updateSpecialArticle(currentEmail, type, id, titleNameField.getText(), groupNameField.getText(), authorsNameField.getText(), abstractNameField.getText(), keywordsNameField.getText(), bodyNameField.getText(), referencesNameField.getText());
+					} else
+						success = databaseHelper.updateArticle(id, titleNameField.getText(), groupNameField.getText(), authorsNameField.getText(), abstractNameField.getText(), keywordsNameField.getText(), bodyNameField.getText(), referencesNameField.getText());
+					if (success) {
 						setViewArticlesPage(type);
 					} else {
-						errorMessage.setText("Error updating article");
+						errorMessage.setText("Error updating article" + (special ? " (you may not have access)" : ""));
 					}
 				},
 				"Save", 13, 158, Pos.CENTER, 180, 530);
@@ -879,8 +1002,12 @@ public class GUI extends Application {
 	 * @param type
 	 * @param id
 	 */
-	public static void setArticleViewPage(String type, long id) {
-		Article article = databaseHelper.getArticle(id);
+	public static void setArticleViewPage(String type, long id, boolean special) {
+		Article article;
+		if (special) {
+			article = databaseHelper.getSpecialArticle(id);
+		} else
+			article = databaseHelper.getArticle(id);
 		
 		Pane root = new Pane();
 		
@@ -922,7 +1049,7 @@ public class GUI extends Application {
 		Button backButton;
 		backButton = createButton(
 				(event) -> {
-					if (type.equals("admin"))
+					if (type.equals("admin") || type.equals("instructor"))
 						setViewArticlesPage(type);
 					else if (type.equals("student"))
 						setSearchPage(type);
@@ -1027,7 +1154,7 @@ public class GUI extends Application {
 	/**
 	 * Sets up the page where every user in the system is displayed
 	 */
-	public static void setListUsersPage() {
+	public static void setListUsersPage(String type) {
 		Pane root = new Pane();
 		
 		ScrollPane scrollPane = new ScrollPane();
@@ -1046,23 +1173,44 @@ public class GUI extends Application {
 		Label title = createLabel("Users:", 30, 512, Pos.CENTER, 0, 0);
 		
 		//Go through each user and create a label for the name and email, and give them buttons
+		numGroups = 0;
 		databaseHelper.forEachUser((id, email, roles, first, middle, last, preferred) -> {
-			Label user = createLabel(preferred + " (" + first + " " + middle + " " + last + ")\n" + email, 13, 256, Pos.TOP_LEFT, 30, id * 30 + 50);
+			int i = id - numGroups;
+			if (type.equals("instructor")) {
+				boolean bool = false;
+				for (String s : roles) {
+					if (s.equals("student"))
+						bool = true;
+				}
+				if (!bool) {
+					numGroups++;
+					return;
+				}
+			}
+			Label user = createLabel(preferred + " (" + first + " " + middle + " " + last + ")\n" + email, 13, 226, Pos.TOP_LEFT, 30, i * 30 + 50);
+			
+			Button accessButton = createButton(//Access button
+					(event) -> {
+						setEditUserAccessPage(email, preferred, roles, type);
+					},
+				"Edit Access", 15, 64, Pos.CENTER, 238, i * 30 + 50);
 			Button userButton = createButton(//Edit button
 					(event) -> {
 						setEditUserPage(email, preferred);
 					},
-				"Edit", 15, 64, Pos.CENTER, 338, id * 30 + 50);
+				"Edit", 15, 64, Pos.CENTER, 338, i * 30 + 50);
+			if (!email.equals(currentEmail))
+				root.getChildren().addAll(accessButton, userButton);
+			root.getChildren().addAll(user);
 			if (!email.equals(currentEmail)) {//If the email is not the logged in user, it can be deleted
 				Button removeUserButton = createButton(
 						(event) -> {},
-					"Remove user", 15, 64, Pos.CENTER, 438, id * 30 + 50);
+					"Remove user", 14, 64, Pos.CENTER, 398, i * 30 + 50);
 				removeUserButton.setOnAction((event) -> {
 						promptDelete(promptPane, deleteButton, user, userButton, removeUserButton, databaseHelper.deleteUser(email));
 					});
 				root.getChildren().add(removeUserButton);
 			}
-			root.getChildren().addAll(user, userButton);
 		});
 		
 		//Go back to the admin page with a button press
@@ -1076,6 +1224,92 @@ public class GUI extends Application {
 		root.getChildren().addAll(title, backButton, errorMessage, promptPane);
 		
 		Scene scene = new Scene(scrollPane, WINDOW_WIDTH, WINDOW_HEIGHT);
+		
+		appStage.setScene(scene);
+		
+		appStage.show();
+	}
+	
+	/**
+	 * Sets up the page where every user in the system is displayed
+	 */
+	public static void setEditUserAccessPage(String email, String preferredName, String[] roles, String type) {
+		Pane root = new Pane();
+		
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 270);
+		errorMessage.setTextFill(Color.RED);
+		
+		//The big title of the page
+		Label title = createLabel("Edit user access: " + preferredName, 30, 512, Pos.CENTER, 0, 0);
+		
+		ArrayList<String> groups = new ArrayList<String>();
+		
+		databaseHelper.forEachSpecialArticle((id, titleName, group, author, abstrac, keywords, body, references, i) -> {
+			for (String str : groups) {
+				if (str.equals(group))
+					return;
+			}
+			groups.add(group);
+		}, currentEmail, type);
+		
+		for (int i = 0; i < groups.size(); i++) {
+			Label l = createLabel(groups.get(i), 15, 128, Pos.BASELINE_LEFT, 6, 70 + i * 30);
+			root.getChildren().add(l);
+			for (int u = 0; u < roles.length; u++) {
+				String display = roles[u] + " (edit: ";
+				if (databaseHelper.doesHaveAdminAccessSpecial(email, roles[u], groups.get(i))) {
+					display += "t)";
+				} else
+					display += "f)";
+				CheckBox b = createCheckBox(display, 13, 96, Pos.CENTER, 106 + 128 * u, 70 + i * 30);
+				int iD = i;
+				int uD = u;
+				b.setOnAction((event) -> {
+					databaseHelper.removeUserAccessSpecial(email, roles[uD], groups.get(iD));
+					if (!b.isSelected()) {
+						String text = b.getText();
+						if (text.substring(text.length() - 2, text.length() - 1).equals("t")) {
+							//b.setText(text.substring(0, text.length() - 2) + "f)");
+						} else {
+							databaseHelper.addUserAdminAccessSpecial(email, roles[uD], groups.get(iD));
+							//b.setText(text.substring(0, text.length() - 2) + "t)");
+							//b.setSelected(true);
+						}
+					} else {
+						databaseHelper.addUserAccessViewSpecial(email, roles[uD], groups.get(iD));
+					}
+					System.out.println(groups.get(iD));
+					String displayNew = roles[uD] + " (edit: ";
+					if (databaseHelper.doesHaveAdminAccessSpecial(email, roles[uD], groups.get(iD))) {
+						displayNew += "t)";
+					} else
+						displayNew += "f)";
+					b.setText(displayNew);
+					b.setSelected(databaseHelper.doesUserHaveAccess(email, groups.get(iD)));
+				});
+				b.setSelected(databaseHelper.doesUserHaveAccess(email, groups.get(i)));
+				
+				root.getChildren().add(b);
+			}
+		}
+		
+//		Button generateButton = createButton(
+//				(event) -> {
+//					
+//				},
+//			"Update", 15, 96, Pos.CENTER, 202, 200);
+		
+		Button backButton = createButton(
+				(event) -> {
+					setAdminPage();
+				},
+			"Back", 15, 96, Pos.CENTER, 202, groups.size() * 30 + 70);
+		
+		//Add all of the elements to the page
+		root.getChildren().addAll(title,
+				backButton, errorMessage);
+		
+		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
 		
 		appStage.setScene(scene);
 		
@@ -1419,6 +1653,19 @@ public class GUI extends Application {
 			if (!test)
 				groups.add(group);
 		});
+		databaseHelper.forEachSpecialArticle((id, titleArticle, group, author, abstrac, keywordsArticle, body, references, i) -> {
+			boolean test = false;
+			
+			//Add displayed groups to the list of groups at the top
+			for (String str : groups) {
+				if (str == group) {
+					test = true;
+					break;
+				}
+			}
+			if (!test)
+				groups.add(group);
+		}, currentEmail, type);
 		
 		ArrayList<CheckBox> groupBoxes = new ArrayList<CheckBox>();
 		CheckBox allGroupBox = createCheckBox("All Groups", 15, 128, Pos.CENTER, 192 + 64, 240);
@@ -1560,6 +1807,65 @@ public class GUI extends Application {
 			numGroups++;
 			articlesSearched.add(new Article(id, title, group, author, abstrac, keywordsArticle, body, references));
 		});
+		databaseHelper.forEachSpecialArticle((id, title, group, author, abstrac, keywordsArticle, body, references, i) -> {
+			boolean found = false;
+			for (String str : groupSearched) {
+				if (str.equals(group)) {
+					found = true;
+					break;
+				}
+			}
+			if (!found)
+				return;
+			
+			found = false;
+			if (!keywords.equals("")) {
+				String[] realKeywords = splitKeywordSearch(keywords);
+				for (String str : realKeywords) {
+					if (title.contains(str) || author.contains(str) || abstrac.contains(str) || keywordsArticle.contains(str)) {
+						found = true;
+						break;
+					}
+				}
+				if (!found)
+					return;
+			}
+			
+			boolean test = false;
+			if (keywordsArticle.toLowerCase().contains("beginner")) {
+				numDifficulty[0]++;
+				if (!beginner)
+					return;
+			}
+			if (keywordsArticle.toLowerCase().contains("intermediate")) {
+				numDifficulty[1]++;
+				if (!intermediate)
+					return;
+			}
+			if (keywordsArticle.toLowerCase().contains("advanced")) {
+				numDifficulty[2]++;
+				if (!advanced)
+					return;
+			}
+			if (keywordsArticle.toLowerCase().contains("expert")) {
+				numDifficulty[3]++;
+				if (!expert)
+					return;
+			}
+			
+			//Add displayed groups to the list of groups at the top
+			for (String str : groups) {
+				if (str.equals(group)) {
+					test = true;
+					break;
+				}
+			}
+			if (!test)
+				groups.add(group);
+			
+			numGroups++;
+			articlesSearched.add(new Article(id, title, group, author, abstrac, keywordsArticle, body, references, true));
+		}, currentEmail, type);
 		
 		Label allGroups = createLabel("Groups:", 20, 500, Pos.CENTER, 6, 70);
 		root.getChildren().add(allGroups);
@@ -1590,7 +1896,7 @@ public class GUI extends Application {
 		for (Article a : articlesSearched) {
 			Label l = createLabel(articleNum + ",\t" + a.title + ",\t" + a.authors + ":\n" + a.abstrac, 15, 500, Pos.BASELINE_LEFT, 6, currentHeight);
 			Button b = createButton((event) -> {
-				setArticleViewPage(type, a.id);
+				setArticleViewPage(type, a.id, a.special);
 			}, "View", 15, 128, Pos.CENTER, 300, currentHeight);
 			articleNum++;
 			currentHeight += 60;

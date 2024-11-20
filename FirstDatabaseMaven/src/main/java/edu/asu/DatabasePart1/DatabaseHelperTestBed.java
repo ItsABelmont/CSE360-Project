@@ -58,7 +58,7 @@ public class DatabaseHelperTestBed {
 
         // Delete a user from the database
         performTestCase(5, "Delete User", () -> {
-            dbHelper.deleteUser();
+            dbHelper.deleteUser("testuser@example.com");
             return dbHelper.doesUserExist("testuser@example.com", "student");
         });
         
@@ -67,6 +67,7 @@ public class DatabaseHelperTestBed {
             // Test setup
             String userEmail = "testuser@example.com";
             String title = "a";
+            String role = "admin";
             String level = "b";
             String group = "c";
             String authors = "d";
@@ -76,7 +77,7 @@ public class DatabaseHelperTestBed {
             String references = "Reference 1";
             
             // Perform the operation
-            return dbHelper.adminCreateSpecialGroup(userEmail, title, level, group, authors, abstrac, keywords, body, references);
+            return dbHelper.adminCreateSpecialGroup(userEmail, role, title, level, group, authors, abstrac, keywords, body, references);
             
         });
         

@@ -102,7 +102,7 @@ class DatabaseHelper {
 		/*
 		 * Must encrypt the body of these articles later
 		 */
-		String specialArticleTable = "CREATE TABLE IF NOT EXISTS specialArticle ("
+		String specialArticleTable = "CREATE TABLE IF NOT EXISTS specialArticles ("
 				+ "id LONG UNIQUE, "
 				+ "title VARCHAR(255), "
 				+ "level VARCHAR(255), "
@@ -971,7 +971,55 @@ class DatabaseHelper {
 	 * @param method
 	 */
 	public void forEachSpecialArticle(ArticleMethod method, String email, String role) {
-		String sql = "SELECT * FROM specialarticles";
+		String sql = "SELECT * FROM specialArticles";
+		
+		try {
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(sql); 
+	
+			int i = 0;
+			while(rs.next()) {
+				if (this.doesUserHaveAccess(email, rs.getString("groupName"))) {
+					// Retrieve by column name 
+					int id  = rs.getInt("id");
+					
+					String title = rs.getString("title");
+					String group = rs.getString("groupName");
+					String author = rs.getString("authors");
+					String abstrac = rs.getString("abstract");
+					String keywords = rs.getString("keywords");
+					String body = rs.getString("encryptedBody");
+					char[] decryptedBody = null;
+					try {
+						decryptedBody = EncryptionUtils.toCharArray(
+							encryptionHelper.decrypt(
+								Base64.getDecoder().decode(
+									body
+								), 
+								EncryptionUtils.getInitializationVector("1".toCharArray())
+							)	
+						);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					String decryptedBodyString = new String(decryptedBody);
+					String references = rs.getString("references");
+					method.doThing(id, title, group, author, abstrac, keywords, decryptedBodyString, references, i);
+					i++;
+				}
+			}
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * This method performs a given action looping through every accessible article
+	 * @param method
+	 */
+	public void forEachSpecialArticleAdmin(ArticleMethod method, String email, String role) {
+		String sql = "SELECT * FROM specialArticles";
 		
 		try {
 			Statement stmt = connection.createStatement();
@@ -988,9 +1036,23 @@ class DatabaseHelper {
 					String author = rs.getString("authors");
 					String abstrac = rs.getString("abstract");
 					String keywords = rs.getString("keywords");
-					String body = rs.getString("body");
+					String body = rs.getString("encryptedBody");
+					char[] decryptedBody = null;
+					try {
+						decryptedBody = EncryptionUtils.toCharArray(
+							encryptionHelper.decrypt(
+								Base64.getDecoder().decode(
+									body
+								), 
+								EncryptionUtils.getInitializationVector("1".toCharArray())
+							)	
+						);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					String decryptedBodyString = new String(decryptedBody);
 					String references = rs.getString("references");
-					method.doThing(id, title, group, author, abstrac, keywords, body, references, i);
+					method.doThing(id, title, group, author, abstrac, keywords, decryptedBodyString, references, i);
 					i++;
 				}
 			}
@@ -1005,7 +1067,7 @@ class DatabaseHelper {
 	 * @param method
 	 */
 	public void forEachSpecialArticle(ArticleMethod method) {
-		String sql = "SELECT * FROM specialarticles";
+		String sql = "SELECT * FROM specialArticles";
 		
 		try {
 			Statement stmt = connection.createStatement();
@@ -1021,7 +1083,7 @@ class DatabaseHelper {
 				String author = rs.getString("authors");
 				String abstrac = rs.getString("abstract");
 				String keywords = rs.getString("keywords");
-				String body = rs.getString("body");
+				String body = rs.getString("encryptedBody");
 				String references = rs.getString("references");
 				method.doThing(id, title, group, author, abstrac, keywords, body, references, i);
 				i++;
@@ -1129,23 +1191,20 @@ class DatabaseHelper {
 	    return false; // If an error occurs, assume user doesn't exist
 	}
 	//adds a new article
-	public boolean adminCreateSpecialGroup(String title, String level, String group, String authors, String abstrac, String keywords, String body, String references) {
+	public boolean adminCreateSpecialGroup(String userEmail, String role, String title, String level, String group, String authors, String abstrac, String keywords, String body, String references) {
 		/*
 		 * encrypt body here somehow
 		 * and get user info
 		 */
-		String userEmail = "";
 		String encryptedBody = "";
 		
-		addUserAccessSpecial(userEmail, "admin", group);
-		
+		addUserAccessSpecial(userEmail, role, group);
 
 		try {
 			encryptedBody = Base64.getEncoder().encodeToString(
 					encryptionHelper.encrypt("1".getBytes(), EncryptionUtils.getInitializationVector("1".toCharArray()))
 			);
 		} catch (Exception e) {
-				// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -1155,7 +1214,7 @@ class DatabaseHelper {
 	        long leftLimit = 1L;
 	        long rightLimit = 10000000L;
 	        long randomLong = leftLimit + (long) (random.nextDouble() * (rightLimit - leftLimit));
-			String insertUser = "INSERT INTO  specialArticle (id, title, level, groupName, authors, abstract, keywords, encryptedBody, references) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+			String insertUser = "INSERT INTO specialArticles (id, title, level, groupName, authors, abstract, keywords, encryptedBody, references) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 			try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
 				pstmt.setLong(1, randomLong);
 				pstmt.setString(2, title);
@@ -1179,9 +1238,8 @@ class DatabaseHelper {
 		return false;
 	}
 	
-	public boolean addToSpecialGroup(String title, String level, String group, String authors, String abstrac, String keywords, String body, String references) {
+	public boolean addToSpecialGroup(String userEmail, String title, String level, String group, String authors, String abstrac, String keywords, String body, String references) {
 		
-		String userEmail = "";
 		String encryptedBody = "";
 		
 		try {
@@ -1193,7 +1251,7 @@ class DatabaseHelper {
 			e.printStackTrace();
 		}
 		
-		if(doesUserHaveAccess(userEmail, group)) {
+		if(true || doesUserHaveAccess(userEmail, group)) {
 			
 			try {
 				//random unique long can change right limit for longer long
@@ -1201,7 +1259,7 @@ class DatabaseHelper {
 		        long leftLimit = 1L;
 		        long rightLimit = 10000000L;
 		        long randomLong = leftLimit + (long) (random.nextDouble() * (rightLimit - leftLimit));
-				String insertUser = "INSERT INTO  specialArticle (id, title, level, groupName, authors, abstract, keywords, encryptedBody, references) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+				String insertUser = "INSERT INTO specialArticles (id, title, level, groupName, authors, abstract, keywords, encryptedBody, references) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 				try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
 					pstmt.setLong(1, randomLong);
 					pstmt.setString(2, title);
@@ -1228,7 +1286,7 @@ class DatabaseHelper {
 	//Just prints out the decrypted body please tell if we need more decryptions
 	public boolean decryptSpecialAccess(String userEmail, String group) {
 				
-		String sql = "SELECT * FROM specialArticle"; 
+		String sql = "SELECT * FROM specialArticles"; 
 		ResultSet rs = null;
 		try {
 			Statement stmt = connection.createStatement();
@@ -1280,8 +1338,8 @@ class DatabaseHelper {
 			Statement stmt = connection.createStatement();
 			ResultSet rs = stmt.executeQuery(sql); 
 	
-			while(rs.next()) { 
-				if(rs.getString("userEmail").equals(userEmail)) {
+			while(rs.next()) {
+				if(rs.getString("userEmail").equals(userEmail) && rs.getString("groupName").equals(group)) {
 					return true;
 				}
 			} 
@@ -1310,9 +1368,83 @@ class DatabaseHelper {
 				
 				pstmt.setString(4, group);
 				pstmt.executeUpdate();
+				return true;
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+			}
+		}
+		
+		return false;
+	}
+	
+public boolean addUserAccessViewSpecial(String userEmail, String userRole, String group) {
+		
+		/*
+		 * check to see if the user has that role
+		 */
+		
+		if(userExist(userEmail)) {
+			String insertUser = "INSERT INTO  accessToSpecial (userEmail, userRole, adminRights, groupName) VALUES (?, ?, ?, ?)";
+			try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
+				pstmt.setString(1, userEmail);
+				pstmt.setString(2, userRole);
+				pstmt.setString(3, "f");
+				
+				pstmt.setString(4, group);
+				pstmt.executeUpdate();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		return false;
+	}
+	
+	public boolean addUserAdminAccessSpecial(String userEmail, String userRole, String group) {
+		
+		/*
+		 * check to see if the user has that role
+		 */
+		
+		if(userExist(userEmail)) {
+			String insertUser = "INSERT INTO  accessToSpecial (userEmail, userRole, adminRights, groupName) VALUES (?, ?, ?, ?)";
+			try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
+				pstmt.setString(1, userEmail);
+				pstmt.setString(2, userRole);
+				pstmt.setString(3, "t");
+				
+				pstmt.setString(4, group);
+				pstmt.executeUpdate();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		return false;
+	}
+	
+	public boolean removeUserAccessSpecial(String userEmail, String userRole, String group) {
+		
+		/*
+		 * check to see if the user has that role
+		 */
+		
+		if(userExist(userEmail)) {
+			try {
+				String query = "DELETE FROM accessToSpecial WHERE userEmail = ? AND userRole = ? AND groupName = ?";
+				PreparedStatement statement = connection.prepareStatement(query);
+				statement.setString(1, userEmail);
+				statement.setString(2, userRole);
+				statement.setString(3, group);
+				
+				statement.executeUpdate();
+				return true;
+			} catch (SQLException e) {
+				e.printStackTrace();
+				return false;
 			}
 		}
 		
@@ -1368,14 +1500,31 @@ class DatabaseHelper {
 		return false;
 	}
 	//deletes articles
-	public void deleteArticle(long id) {
+	public boolean deleteArticle(long id) {
 		try {
 			String query = "DELETE FROM articles WHERE id = ?";
 			PreparedStatement statement = connection.prepareStatement(query);
 			statement.setLong(1, id);
 			statement.executeUpdate();
+			return true;
 		} catch (SQLException e) {
 			e.printStackTrace();
+			return false;
+		}
+	}
+	//deletes articles
+	public boolean deleteSpecialArticle(String email, String role, long id) {
+		if (!doesHaveAdminAccessSpecial(email, role, getSpecialArticle(id).group))
+			return false;
+		try {
+			String query = "DELETE FROM specialArticles WHERE id = ?";
+			PreparedStatement statement = connection.prepareStatement(query);
+			statement.setLong(1, id);
+			statement.executeUpdate();
+			return true;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
 		}
 	}
 	
@@ -1402,6 +1551,41 @@ class DatabaseHelper {
 		}
 		return false;
 	}
+	
+	//updates articles
+		public boolean updateSpecialArticle(String email, String role, long id, String title, String groupName, String authors, String abstrac, String keywords, String body, String references) {
+			if (!doesHaveAdminAccessSpecial(email, role, groupName))
+				return false;
+			
+			String sql = "UPDATE specialArticles SET title = ?, groupName = ?, authors = ?, abstract = ?, keywords = ?, body = ?, references = ? WHERE id = ?";
+			
+			String encryptedBody = "";
+			try {
+				encryptedBody = Base64.getEncoder().encodeToString(
+					encryptionHelper.encrypt("1".getBytes(), EncryptionUtils.getInitializationVector("1".toCharArray()))
+				);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			try(PreparedStatement statement = connection.prepareStatement(sql)){
+				statement.setString(1, title);
+				statement.setString(2, groupName);
+				statement.setString(3, authors);
+				statement.setString(4, abstrac);
+				statement.setString(5, keywords);
+				statement.setString(6, encryptedBody);
+				statement.setString(7, references);
+				statement.setInt(8, (int) id);
+				int rowAffected = statement.executeUpdate();
+				
+				return true;
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return false;
+		}
 	
 	public void displayArticleByAdmin() throws Exception{
 		String sql = "SELECT * FROM articles"; 
@@ -1480,6 +1664,48 @@ class DatabaseHelper {
 					String references = rs.getString("references");
 	
 					return new Article(ide, title, group, authors, abstrac, keywords, encryptedBody, references);
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
+	//lets a user see a specific special article if they have they correct id
+	public Article getSpecialArticle(long id) {
+		try {
+			String sql = "SELECT * FROM specialArticles"; 
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(sql); 
+	
+			while(rs.next()) { 
+				if(rs.getInt("id") == id) {
+					long ide  = rs.getInt("id"); 
+					String title = rs.getString("title"); 
+					String group = rs.getString("groupName");
+					String authors = rs.getString("authors");  
+					String abstrac = rs.getString("abstract");
+					String keywords = rs.getString("keywords");
+					String encryptedBody = rs.getString("encryptedBody");
+					char[] decryptedBody = null;
+					try {
+						decryptedBody = EncryptionUtils.toCharArray(
+							encryptionHelper.decrypt(
+								Base64.getDecoder().decode(
+									encryptedBody
+								), 
+								EncryptionUtils.getInitializationVector("1".toCharArray())
+							)	
+						);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					String decryptedBodyString = new String(decryptedBody);
+					String references = rs.getString("references");
+	
+					return new Article(ide, title, group, authors, abstrac, keywords, decryptedBodyString, references);
 				}
 			}
 		} catch (SQLException e) {

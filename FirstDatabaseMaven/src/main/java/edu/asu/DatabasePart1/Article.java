@@ -20,6 +20,7 @@ public class Article {
 	String keywords;
 	String body;
 	String references;
+	boolean special = false;
 	
 	/**
 	 * Creates a new Article
@@ -41,5 +42,28 @@ public class Article {
 		this.keywords = keywords;
 		this.body = body;
 		this.references = references;
+	}
+	
+	/**
+	 * Creates a new Article
+	 * @param id
+	 * @param title
+	 * @param group
+	 * @param authors
+	 * @param abstrac
+	 * @param keywords
+	 * @param body
+	 * @param references
+	 */
+	public Article(long id, String title, String group, String authors, String abstrac, String keywords, String body, String references, boolean special) {
+		this.id = id;
+		this.title = title;
+		this.group = group;
+		this.authors = authors;
+		this.abstrac = abstrac;
+		this.keywords = keywords;
+		this.body = body;
+		this.references = references;
+		this.special = special; 
 	}
 }
