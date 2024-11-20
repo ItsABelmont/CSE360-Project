@@ -1103,12 +1103,20 @@ class DatabaseHelper {
 		 * and get user info
 		 */
 		String userEmail = "";
+		String encryptedBody = "";
 		
 		addUserAccessSpecial(userEmail, "admin", group);
 		
-		/*
-		 * Encrypt the body
-		 */
+
+		try {
+			encryptedBody = Base64.getEncoder().encodeToString(
+					encryptionHelper.encrypt("1".getBytes(), EncryptionUtils.getInitializationVector("1".toCharArray()))
+			);
+		} catch (Exception e) {
+				// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		try {
 			//random unique long can change right limit for longer long
 			Random random = new Random();
@@ -1124,7 +1132,7 @@ class DatabaseHelper {
 				pstmt.setString(5, authors);
 				pstmt.setString(6, abstrac);
 				pstmt.setString(7, keywords);
-				pstmt.setString(8, body);
+				pstmt.setString(8, encryptedBody);
 				pstmt.setString(9, references);
 				pstmt.executeUpdate();
 			}
@@ -1142,35 +1150,17 @@ class DatabaseHelper {
 	public boolean addToSpecialGroup(String title, String level, String group, String authors, String abstrac, String keywords, String body, String references) {
 		
 		String userEmail = "";
-		/*
-		String encryptedBody = body;
+		String encryptedBody = "";
 		
 		try {
 			encryptedBody = Base64.getEncoder().encodeToString(
-					encryptionHelper.encrypt(body.getBytes(), EncryptionUtils.getInitializationVector(group.toCharArray()))
+					encryptionHelper.encrypt("1".getBytes(), EncryptionUtils.getInitializationVector("1".toCharArray()))
 			);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+				// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
-		char[] decryptedPassword = null;
-		try {
-			decryptedPassword = EncryptionUtils.toCharArray(
-					encryptionHelper.decrypt(
-							Base64.getDecoder().decode(
-									encryptedBody
-							), 
-							EncryptionUtils.getInitializationVector(group.toCharArray())
-					)	
-			);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		EncryptionUtils.printCharArray(decryptedPassword);
-		*/
 		if(doesUserHaveAccess(userEmail, group)) {
 			
 			try {
@@ -1188,7 +1178,7 @@ class DatabaseHelper {
 					pstmt.setString(5, authors);
 					pstmt.setString(6, abstrac);
 					pstmt.setString(7, keywords);
-					pstmt.setString(8, body);
+					pstmt.setString(8, encryptedBody);
 					pstmt.setString(9, references);
 					pstmt.executeUpdate();
 				}
@@ -1203,12 +1193,48 @@ class DatabaseHelper {
 		return false;
 	}
 	
+	//Just prints out the decrypted body please tell if we need more decryptions
 	public boolean decryptSpecialAccess(String userEmail, String group) {
+				
+		String sql = "SELECT * FROM specialArticle"; 
+		ResultSet rs = null;
+		try {
+			Statement stmt = connection.createStatement();
+			rs = stmt.executeQuery(sql);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
 		
 		if(doesUserHaveAccess(userEmail, group)) {
-			/*
-			 * decrypt or something
-			 */
+			try {
+				while(rs.next()) {
+					if(rs.getString("groupName").equals(group)) {
+						char[] decryptedBody = null;
+						try {
+							decryptedBody = EncryptionUtils.toCharArray(
+									encryptionHelper.decrypt(
+											Base64.getDecoder().decode(
+													rs.getString("encryptedBody")
+											), 
+											EncryptionUtils.getInitializationVector("1".toCharArray())
+									)	
+							);
+						} catch (Exception e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						
+						EncryptionUtils.printCharArray(decryptedBody);
+						return true;
+
+				
+					}
+				}
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		
 		return false;
