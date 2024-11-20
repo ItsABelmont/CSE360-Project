@@ -1001,6 +1001,38 @@ class DatabaseHelper {
 	}
 	
 	/**
+	 * This method performs a given action looping through every accessible article
+	 * @param method
+	 */
+	public void forEachSpecialArticle(ArticleMethod method) {
+		String sql = "SELECT * FROM specialarticles";
+		
+		try {
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(sql); 
+	
+			int i = 0;
+			while(rs.next()) {
+				// Retrieve by column name 
+				int id  = rs.getInt("id");
+				
+				String title = rs.getString("title");
+				String group = rs.getString("groupName");
+				String author = rs.getString("authors");
+				String abstrac = rs.getString("abstract");
+				String keywords = rs.getString("keywords");
+				String body = rs.getString("body");
+				String references = rs.getString("references");
+				method.doThing(id, title, group, author, abstrac, keywords, body, references, i);
+				i++;
+			}
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
 	 * A legacy console command for displaying all of the users
 	 * @throws SQLException
 	 */
