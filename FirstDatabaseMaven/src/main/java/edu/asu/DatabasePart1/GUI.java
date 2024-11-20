@@ -3,6 +3,7 @@ package edu.asu.DatabasePart1;
 import java.io.File;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import javafx.application.Application;
 import javafx.event.ActionEvent;
@@ -47,6 +48,8 @@ public class GUI extends Application {
 	public static final double WINDOW_WIDTH = 512;
 	public static final double WINDOW_HEIGHT = 384;
 	public static final String FONT_NAME = "Arial";
+	
+	private static ArrayList<String> searchHistory = new ArrayList<String>();
 	
 	/**
 	 * This is used for routing into the main runtime from StartCSE360
@@ -273,7 +276,7 @@ public class GUI extends Application {
 			"Logout", 15, 64, Pos.CENTER, 438, 10);
 		
 		//Add all of the elements to the page
-		root.getChildren().addAll(title, generateCodeButton, listUsersButton, articlesButton, backupButton, restoreButton, logoutButton, errorMessage);
+		root.getChildren().addAll(title, generateCodeButton, listUsersButton, /*articlesButton, */backupButton, restoreButton, logoutButton, errorMessage);
 		
 		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
 		
@@ -1207,6 +1210,24 @@ public class GUI extends Application {
 		//The big title of the page
 		Label title = createLabel("HELLO, " + loginPreferredName, 30, 512, Pos.CENTER, 0, 0);
 		
+		Button searchButton = createButton(
+				(event) -> {
+					setSearchPage("student");
+				},
+			"Search articles", 20, 256, Pos.CENTER, 128, 128);
+		
+		Button questionButton = createButton(
+				(event) -> {
+					setQuestionPage();
+				},
+			"Ask a question", 15, 128, Pos.CENTER, 256 - 64, 320);
+		
+		Button findButton = createButton(
+				(event) -> {
+					setFindPage();
+				},
+			"Can't find something?", 15, 168, Pos.CENTER, 256 - 84, 350);
+		
 		Button logoutButton = createButton(
 				(event) -> {
 					setLoginPage();
@@ -1214,13 +1235,314 @@ public class GUI extends Application {
 			"Logout", 15, 64, Pos.CENTER, 438, 10);
 		
 		//Add all of the elements to the page
-		root.getChildren().addAll(title, logoutButton, errorMessage);
+		root.getChildren().addAll(title, searchButton, questionButton, findButton, logoutButton, errorMessage);
 		
 		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
 		
 		appStage.setScene(scene);
 		
 		appStage.show();
+	}
+	
+	/**
+	 * This method sets up the special question page
+	 */
+	public static void setFindPage() {
+		Pane root = new Pane();
+		
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 170);
+		errorMessage.setTextFill(Color.RED);
+		
+		//The big title of the page
+		Label title = createLabel("Ask a special question:", 30, 512, Pos.CENTER, 0, 0);
+		
+		TextArea textField = createTextArea("", 15, 500, true, 6, 128);
+		
+		Button askButton = createButton(
+				(event) -> {
+					//TODO Ask the question in the database
+					setStudentPage();
+				},
+			"Ask", 15, 168, Pos.CENTER, 256 - 84, 350);
+		
+		Button backButton = createButton(
+				(event) -> {
+					setStudentPage();
+				},
+			"Back", 15, 64, Pos.CENTER, 438, 10);
+		
+		//Add all of the elements to the page
+		root.getChildren().addAll(title, textField, askButton, backButton, errorMessage);
+		
+		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
+		
+		appStage.setScene(scene);
+		
+		appStage.show();
+	}
+	
+	/**
+	 * This method sets up the page for a student to ask a general question
+	 */
+	public static void setQuestionPage() {
+		Pane root = new Pane();
+		
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 170);
+		errorMessage.setTextFill(Color.RED);
+		
+		//The big title of the page
+		Label title = createLabel("Ask a question:", 30, 512, Pos.CENTER, 0, 0);
+		
+		TextArea textField = createTextArea("", 15, 500, true, 6, 128);
+		
+		Button askButton = createButton(
+				(event) -> {
+					//TODO Ask the question in the database
+					setStudentPage();
+				},
+			"Ask", 15, 168, Pos.CENTER, 256 - 84, 350);
+		
+		Button backButton = createButton(
+				(event) -> {
+					setStudentPage();
+				},
+			"Back", 15, 64, Pos.CENTER, 438, 10);
+		
+		//Add all of the elements to the page
+		root.getChildren().addAll(title, textField, askButton, backButton, errorMessage);
+		
+		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
+		
+		appStage.setScene(scene);
+		
+		appStage.show();
+	}
+
+	/**
+	 * This method sets up the student article search page
+	 */
+	public static void setSearchPage(String type) {
+		Pane root = new Pane();
+		
+		ScrollPane scroll = new ScrollPane();
+		scroll.setContent(root);
+		
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 320);
+		errorMessage.setTextFill(Color.RED);
+		
+		//The big title of the page
+		Label title = createLabel("Search", 30, 512, Pos.CENTER, 0, 0);
+		
+		CheckBox allBox = createCheckBox("All", 10, 128, Pos.CENTER, 256-64, 120);
+		CheckBox beginnerBox = createCheckBox("Beginner", 10, 128, Pos.CENTER, 256-128, 70);
+		beginnerBox.setSelected(true);
+		beginnerBox.setOnAction((event) -> {
+			if (allBox.isSelected() && !beginnerBox.isSelected()) {
+				allBox.setSelected(false);
+			}
+		});
+		CheckBox intermediateBox = createCheckBox("Intermediate", 10, 128, Pos.CENTER, 256, 70);
+		intermediateBox.setSelected(true);
+		intermediateBox.setOnAction((event) -> {
+			if (allBox.isSelected() && !intermediateBox.isSelected()) {
+				allBox.setSelected(false);
+			}
+		});
+		CheckBox advancedBox = createCheckBox("Advanced", 10, 128, Pos.CENTER, 256-128, 90);
+		advancedBox.setSelected(true);
+		advancedBox.setOnAction((event) -> {
+			if (allBox.isSelected() && !advancedBox.isSelected()) {
+				allBox.setSelected(false);
+			}
+		});
+		CheckBox expertBox = createCheckBox("Expert", 10, 128, Pos.CENTER, 256, 90);
+		expertBox.setSelected(true);
+		expertBox.setOnAction((event) -> {
+			if (allBox.isSelected() && !expertBox.isSelected()) {
+				allBox.setSelected(false);
+			}
+		});
+		allBox.setSelected(true);
+		allBox.setOnAction((event) -> {
+			boolean set = allBox.isSelected();
+			if (set) {
+				beginnerBox.setSelected(set);
+				intermediateBox.setSelected(set);
+				advancedBox.setSelected(set);
+				expertBox.setSelected(set);
+			}
+		});
+		
+		root.getChildren().addAll(beginnerBox, intermediateBox, advancedBox, expertBox, allBox);
+		
+		Label keywordLabel = createLabel("Keywords:", 15, 512, Pos.CENTER, 0, 180);
+		TextField keywords = createTextField("", 15, 512, Pos.CENTER, 0, 210);
+		
+		ArrayList<String> groups = new ArrayList<String>();
+		
+		databaseHelper.forEachArticle((id, titleArticle, group, author, abstrac, keywordsArticle, body, references, i) -> {
+			boolean test = false;
+			
+			//Add displayed groups to the list of groups at the top
+			for (String str : groups) {
+				if (str == group) {
+					test = true;
+					break;
+				}
+			}
+			if (!test)
+				groups.add(group);
+		});
+		
+		ArrayList<CheckBox> groupBoxes = new ArrayList<CheckBox>();
+		CheckBox allGroupBox = createCheckBox("All Groups", 15, 128, Pos.CENTER, 192 + 64, 240);
+		root.getChildren().add(allGroupBox);
+		
+		for (int i = 0; i < groups.size(); i++) {
+			CheckBox groupNameLabel = createCheckBox(groups.get(i), 15, 128, Pos.CENTER, 192 + 128 * (i%2), (i/2) * 30 + 270);
+			groupNameLabel.setSelected(true);
+			groupNameLabel.setOnAction((event) -> {
+				if (!groupNameLabel.isSelected())
+					allGroupBox.setSelected(false);
+			});
+			root.getChildren().add(groupNameLabel);
+			groupBoxes.add(groupNameLabel);
+		}
+		allGroupBox.setOnAction((event) -> {
+			if (allGroupBox.isSelected()) {
+				for (CheckBox b : groupBoxes) {
+					b.setSelected(true);
+				}
+			}
+		});
+		
+		Button searchButton = createButton(
+				(event) -> {
+					searchHistory.add(keywords.getText());
+					setSearchingPage(keywords.getText(),
+							beginnerBox.isSelected(), 
+							intermediateBox.isSelected(),
+							advancedBox.isSelected(),
+							expertBox.isSelected(), type);
+				},
+				"Search", 20, 256, Pos.CENTER, 128, groups.size() / 2 * 30 + 270);
+		
+		Button backButton = createButton(
+				(event) -> {
+					if (type.equals("admin"))
+						setAdminPage();
+					else if (type.equals("instructor"))
+						setInstructorPage();
+					else setStudentPage();
+				},
+			"Back", 15, 64, Pos.CENTER, 438, 10);
+		
+		//Add all of the elements to the page
+		root.getChildren().addAll(title, keywordLabel, keywords, searchButton, backButton, errorMessage);
+		
+		Scene scene = new Scene(scroll, WINDOW_WIDTH, WINDOW_HEIGHT);
+		
+		appStage.setScene(scene);
+		
+		appStage.show();
+	}
+	
+	/**
+	 * This method sets up the student article search page
+	 */
+	public static void setSearchingPage(String keywords, boolean beginner, boolean intermediate, boolean advanced, boolean expert, String type) {
+		Pane root = new Pane();
+		
+		ScrollPane scroll = new ScrollPane();
+		scroll.setContent(root);
+		
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 320);
+		errorMessage.setTextFill(Color.RED);
+		
+		//The big title of the page
+		Label titleLabel = createLabel("Search Results:", 30, 512, Pos.CENTER, 0, 0);
+		
+		ArrayList<String> groups = new ArrayList<String>();
+		int[] numDifficulty = new int[4];
+		
+		databaseHelper.forEachArticle((id, title, group, author, abstrac, keywordsArticle, body, references, i) -> {
+			boolean test = false;
+			if (keywordsArticle.toLowerCase().contains("beginner")) {
+				numDifficulty[0]++;
+				if (!beginner)
+					return;
+			}
+			if (keywordsArticle.toLowerCase().contains("intermediate")) {
+				numDifficulty[1]++;
+				if (!intermediate)
+					return;
+			}
+			if (keywordsArticle.toLowerCase().contains("advanced")) {
+				numDifficulty[2]++;
+				if (!advanced)
+					return;
+			}
+			if (keywordsArticle.toLowerCase().contains("expert")) {
+				numDifficulty[3]++;
+				if (!expert)
+					return;
+			}
+			
+			
+			
+			//Add displayed groups to the list of groups at the top
+			for (String str : groups) {
+				if (str == group) {
+					test = true;
+					break;
+				}
+			}
+			if (!test)
+				groups.add(group);
+		});
+		
+		Label allGroups = createLabel("Groups:", 20, 500, Pos.CENTER, 6, 70);
+		root.getChildren().add(allGroups);
+		
+		for (int i = 0; i < groups.size(); i++) {
+			Label groupName = createLabel(groups.get(i), 15, 256, Pos.CENTER, 256 - 192 + (i % 2) * 128, (i/2) * 30 + 100);
+			root.getChildren().add(groupName);
+		}
+		int currentHeight = (groups.size()/2) * 30 + 100 + 30;
+		
+		Label beginnerArticles = createLabel("Beginner Articles: " + numDifficulty[0], 15, 128, Pos.CENTER, 120, currentHeight);
+		Label intermediateArticles = createLabel("Intermediate Articles: " + numDifficulty[1], 15, 128, Pos.CENTER, 264, currentHeight);
+		currentHeight += 30;
+		Label advancedArticles = createLabel("Advanced Articles: " + numDifficulty[2], 15, 128, Pos.CENTER, 120, currentHeight);
+		Label expertArticles = createLabel("Expert Articles: " + numDifficulty[3], 15, 128, Pos.CENTER, 264, currentHeight);
+		
+		if (beginner)
+			root.getChildren().add(beginnerArticles);
+		if (intermediate)
+			root.getChildren().add(intermediateArticles);
+		if (advanced)
+			root.getChildren().add(advancedArticles);
+		if (expert)
+			root.getChildren().add(expertArticles);
+		
+		Button backButton = createButton(
+				(event) -> {
+					setSearchPage(type);
+				},
+			"Back", 15, 64, Pos.CENTER, 438, 10);
+		
+		//Add all of the elements to the page
+		root.getChildren().addAll(titleLabel, backButton, errorMessage);
+		
+		Scene scene = new Scene(scroll, WINDOW_WIDTH, WINDOW_HEIGHT);
+		
+		appStage.setScene(scene);
+		
+		appStage.show();
+	}
+	
+	private static String[] splitKeywordSearch(String keywords) {
+		return keywords.split(" +");
 	}
 	
 	/**
@@ -1260,7 +1582,7 @@ public class GUI extends Application {
 		
 		Button createButton = createButton(
 				(event) -> {
-					if (passwordInput.getText().equals(confirmPasswordInput.getText()) && emailInput.getText().length() > 0) {
+					if (passwordInput.getText().equals(confirmPasswordInput.getText())) {
 						if (emptyDatabase) {
 							//If the database is empty, create an admin account
 							createFirstAdmin(emailInput.getText(), passwordInput.getText());
@@ -1315,6 +1637,7 @@ public class GUI extends Application {
 	 */
 	private static void createFirstAdmin(String email, String password) {
 		databaseHelper.register(email, password, new String[]{"admin"});
+		databaseHelper.setCompleteSetup(email);
 		setSetupAccountPage();
 	}
 	
@@ -1369,15 +1692,16 @@ public class GUI extends Application {
 		Button continueButton = createButton(
 				(event) -> {
 					//When setting up an account, check to see if the password needs to be reset
-					if (databaseHelper.shouldUserReset(currentEmail) || databaseHelper.checkFinish(currentEmail)) {
-						if (passwordInput.getText().equals(password2Input.getText()))
+					if (databaseHelper.shouldUserReset(currentEmail)) {
+						if (passwordInput.getText().equals(password2Input.getText())) {
 							databaseHelper.setPassword(currentEmail, passwordInput.getText());
-						else {
+						} else {
 							failCreateAccount(errorMessage, "Passwords do NOT match!");
 							return;
 						}
 					}
 					setupInformation(firstInput.getText(), middleInput.getText(), lastInput.getText(), preferredInput.getText());
+					databaseHelper.setCompleteSetup(currentEmail);
 				},
 			"Continue", 15, 64, Pos.CENTER, 218, 270);
 		
@@ -1486,7 +1810,7 @@ public class GUI extends Application {
 	private static TextArea createTextArea(String defaultText, double fontSize, double width, boolean wrap, double x, double y){
 		TextArea t = new TextArea(defaultText);
 		t.setFont(Font.font(FONT_NAME, fontSize));
-		t.setMinWidth(width);
+		t.setMaxWidth(width);
 		t.setWrapText(wrap);
 		t.setLayoutX(x);
 		t.setLayoutY(y);		
