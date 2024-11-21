@@ -1259,7 +1259,7 @@ public class GUI extends Application {
 			root.getChildren().add(l);
 			for (int u = 0; u < roles.length; u++) {
 				String display = roles[u] + " (edit: ";
-				if (databaseHelper.doesHaveAdminAccessSpecial(email, roles[u], groups.get(i))) {
+				if (databaseHelper.doesHaveAdminAccessSpecial(email, roles[u], groups.get(i)) && !type.equals("instructor")) {
 					display += "t)";
 				} else
 					display += "f)";
