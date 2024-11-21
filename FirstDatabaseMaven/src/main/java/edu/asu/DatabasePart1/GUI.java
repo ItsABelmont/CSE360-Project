@@ -1259,7 +1259,7 @@ public class GUI extends Application {
 			root.getChildren().add(l);
 			for (int u = 0; u < roles.length; u++) {
 				String display = roles[u] + " (edit: ";
-				if (databaseHelper.doesHaveAdminAccessSpecial(email, roles[u], groups.get(i)) && !type.equals("instructor")) {
+				if (databaseHelper.doesHaveAdminAccessSpecial(email, roles[u], groups.get(i))) {
 					display += "t)";
 				} else
 					display += "f)";
@@ -1303,7 +1303,12 @@ public class GUI extends Application {
 		
 		Button backButton = createButton(
 				(event) -> {
-					setAdminPage();
+					if (type.equals("admin"))
+						setAdminPage();
+					else if (type.equals("instructor"))
+						setInstructorPage();
+					else
+						setStudentPage();
 				},
 			"Back", 15, 96, Pos.CENTER, 202, groups.size() * 30 + 70);
 		
