@@ -1420,6 +1420,13 @@ public class GUI extends Application {
 		//The big title of the page
 		Label title = createLabel("HELLO, " + loginPreferredName, 30, 512, Pos.CENTER, 0, 0);
 		
+		//Go to the list users page
+		Button listUsersButton = createButton(
+				(event) -> {
+					setListUsersPage("instructor");
+				},
+			"List Users", 13, 158, Pos.CENTER, 180, 120);
+		
 		//Go to the article page
 		Button articlesButton = createButton(
 				(event) -> {
@@ -1449,7 +1456,7 @@ public class GUI extends Application {
 			"Logout", 15, 64, Pos.CENTER, 438, 10);
 		
 		//Add all of the elements to the page
-		root.getChildren().addAll(title, articlesButton, backupButton, restoreButton, logoutButton, errorMessage);
+		root.getChildren().addAll(title, listUsersButton, articlesButton, backupButton, restoreButton, logoutButton, errorMessage);
 		
 		Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
 		
