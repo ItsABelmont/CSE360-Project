@@ -1175,6 +1175,7 @@ public class GUI extends Application {
 		//Go through each user and create a label for the name and email, and give them buttons
 		numGroups = 0;
 		databaseHelper.forEachUser((id, email, roles, first, middle, last, preferred) -> {
+			boolean instr = false;
 			int i = id - numGroups;
 			if (type.equals("instructor")) {
 				boolean bool = false;
@@ -1186,6 +1187,7 @@ public class GUI extends Application {
 					numGroups++;
 					return;
 				}
+				instr = true;
 			}
 			Label user = createLabel(preferred + " (" + first + " " + middle + " " + last + ")\n" + email, 13, 226, Pos.TOP_LEFT, 30, i * 30 + 50);
 			
@@ -1199,10 +1201,10 @@ public class GUI extends Application {
 						setEditUserPage(email, preferred);
 					},
 				"Edit", 15, 64, Pos.CENTER, 338, i * 30 + 50);
-			if (!email.equals(currentEmail))
+			if (!email.equals(currentEmail) && !instr)
 				root.getChildren().addAll(accessButton, userButton);
 			root.getChildren().addAll(user);
-			if (!email.equals(currentEmail)) {//If the email is not the logged in user, it can be deleted
+			if (!email.equals(currentEmail) && !instr) {//If the email is not the logged in user, it can be deleted (instructors cannot delete students)
 				Button removeUserButton = createButton(
 						(event) -> {},
 					"Remove user", 14, 64, Pos.CENTER, 398, i * 30 + 50);
