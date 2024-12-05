@@ -1,3 +1,13 @@
+/**
+ * <p> JUnit_ArticleOrganization Class </p>
+ * 
+ * <p> Description: A JUnit demonstration of testing the article organization of the Article class </p>
+ * 
+ * @author Reem Helal
+ * 
+ * @version 1.00	2024-12-04	A set of semi-automated tests
+ * 
+ */
 package edu.asu.DatabasePart1;
 
 import static org.junit.Assert.*;
