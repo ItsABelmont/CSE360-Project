@@ -25,8 +25,10 @@ import Encryption.EncryptionUtils;
  * @version 1.1		2024-10-29	An implementation of article methods restore and backup
  * 
  */
-class DatabaseHelper {
+public class DatabaseHelper {
 
+	static boolean deleteGroupHelp = false;
+	
 	// JDBC driver name and database URL 
 	static final String JDBC_DRIVER = "org.h2.Driver";
 	static final String DB_URL = "jdbc:h2:~/helpSystemDatabase";
@@ -854,6 +856,10 @@ class DatabaseHelper {
 		void doThing(long id, String title, String group, String author, String abstrac, String keywords, String body, String references, int i);
 	}
 	
+	public interface AccessMethod {
+		void doThing(String userEmail, String userRole, String adminRights, String groupName);
+	}
+	
 	/**
 	 * Gets the string array of roles for a user
 	 * @param email
@@ -1349,6 +1355,31 @@ class DatabaseHelper {
 		return false;
 	}
 	
+	public void forEachUserAccess(AccessMethod method) {
+		String sql = "SELECT * FROM accessToSpecial";
+		
+		try {
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(sql); 
+	
+			while(rs.next()) {
+				// Retrieve by column name 
+				//int id  = rs.getInt("id");
+				String  email = rs.getString("userEmail");
+				if (email.equals(""))
+					continue;
+				//String password = rs.getString("password");
+				String userRole = rs.getString("userRole");
+				String adminRights = rs.getString("adminRights");
+				String groupName = rs.getString("groupName");
+				method.doThing(email, userRole, adminRights, groupName);
+			}
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public boolean addUserAccessSpecial(String userEmail, String userRole, String group) {
 		
 		/*
@@ -1498,6 +1529,18 @@ public boolean addUserAccessViewSpecial(String userEmail, String userRole, Strin
 		}
 		
 		return false;
+	}
+	//Deletes groups
+	public boolean deleteGroup(String name) {
+		deleteGroupHelp = true;
+		forEachArticle((id, title, groupName, authors, abstrac, keywords, body, references, i) -> {
+			if (groupName.equals(name)) {
+				if (!deleteArticle(id)) {
+					deleteGroupHelp = false;
+				}
+			}
+		});
+		return deleteGroupHelp;
 	}
 	//deletes articles
 	public boolean deleteArticle(long id) {

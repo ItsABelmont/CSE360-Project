@@ -1218,7 +1218,11 @@ public class GUI extends Application {
 		//Go back to the admin page with a button press
 		Button backButton = createButton(
 				(event) -> {
-					setAdminPage();
+					if (type.equals("admin"))
+						setAdminPage();
+					else if (type.equals("instructor"))
+						setInstructorPage();
+					else setStudentPage();
 				},
 			"Back", 15, 64, Pos.CENTER, 438, 10);
 		
