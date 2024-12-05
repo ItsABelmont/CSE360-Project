@@ -36,7 +36,6 @@ import javafx.stage.Stage;
  * 
  */
 public class GUI extends Application {
-	
 	private static Stage appStage;
 	private static DatabaseHelper databaseHelper;
 	
@@ -1605,9 +1604,6 @@ public class GUI extends Application {
 		ScrollPane scroll = new ScrollPane();
 		scroll.setContent(root);
 		
-		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, 320);
-		errorMessage.setTextFill(Color.RED);
-		
 		//The big title of the page
 		Label title = createLabel("Search", 30, 512, Pos.CENTER, 0, 0);
 		
@@ -1716,7 +1712,13 @@ public class GUI extends Application {
 							groupSearched.add(b.getText());
 					}
 					
-					searchHistory.add(keywords.getText());
+					for (int i = searchHistory.size() - 1; i >= 0; i--) {
+						if (searchHistory.get(i).equals(keywords.getText()))
+							searchHistory.remove(i);
+					}
+					searchHistory.add(0, keywords.getText());
+					if (searchHistory.size() > 5)
+						searchHistory.remove(searchHistory.size() - 1);
 					setSearchingPage(keywords.getText(), groupSearched,
 							beginnerBox.isSelected(), 
 							intermediateBox.isSelected(),
@@ -1735,8 +1737,23 @@ public class GUI extends Application {
 				},
 			"Back", 15, 64, Pos.CENTER, 438, 10);
 		
+		Label errorMessage = createLabel("", 15, 512, Pos.CENTER, 0, groups.size() / 2 * 30 + 310);
+		errorMessage.setTextFill(Color.RED);
+		
 		//Add all of the elements to the page
-		root.getChildren().addAll(title, keywordLabel, keywords, searchButton, backButton, errorMessage);
+		root.getChildren().addAll(title, keywordLabel, keywords, searchButton);
+		int posX = 256 - 51 * searchHistory.size();
+		for (String s : searchHistory) {
+			Button newButton = createButton(
+					null,
+					s, 12, 100, Pos.CENTER, posX, 210);
+			newButton.setOnAction((event) -> {
+				keywords.setText(newButton.getText());
+			});
+			posX += 102;
+			root.getChildren().add(newButton);
+		}
+		root.getChildren().addAll(backButton, errorMessage);
 		
 		Scene scene = new Scene(scroll, WINDOW_WIDTH, WINDOW_HEIGHT);
 		
